@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FormaNotes</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ============================================================ TOKENS */
+:root {
+  --bg:#f0f4f8; --surface:#fff; --surface2:#f4f7fb; --border:#dde4ef;
+  --accent:#4a7fc1; --accent-dark:#3465a8; --accent-light:#e8f0fb;
+  --accent2:#5b9e8a; --accent2-dark:#3d7a68; --accent2-light:#e6f4f0;
+  --neutral:#64748b; --neutral-light:#f1f5f9; --neutral-dark:#475569;
+  --text:#1a2333; --text-muted:#94a3b8; --text-subtle:#b8c4d4;
+  --danger:#e05a5a; --danger-light:#fdf0f0;
+  --success:#3daa7a; --warning:#f59e0b; --warning-light:#fef3c7;
+  --shadow-sm:0 1px 3px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 14px rgba(15,23,42,.09),0 2px 6px rgba(15,23,42,.05);
+  --shadow-blue:0 4px 14px rgba(74,127,193,.15);
+  --shadow-green:0 4px 14px rgba(91,158,138,.15);
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:20px; --r-2xl:24px; --r-full:9999px;
+  --nav-h:68px;
+}
+/* ============================================================ DARK */
+.dark {
+  --bg:#0d1117; --surface:#1c2333; --surface2:#242d42; --border:#344060;
+  --accent:#7ab4e8; --accent-dark:#a0caf5; --accent-light:#1a2f4a;
+  --accent2:#72c4aa; --accent2-dark:#96dcc0; --accent2-light:#163328;
+  --neutral:#8fa3bf; --neutral-light:#242d42; --neutral-dark:#d1ddef;
+  --text:#eaf0fa; --text-muted:#7a90ad; --text-subtle:#4a5a72;
+  --danger:#f07878; --danger-light:#2e1618;
+  --success:#52cc8f; --warning:#fbbf24; --warning-light:#2a2006;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.5); --shadow-md:0 4px 18px rgba(0,0,0,.55);
+  --shadow-blue:0 4px 14px rgba(0,0,0,.4); --shadow-green:0 4px 14px rgba(0,0,0,.4);
+}
+.dark .note-card  { border-left:3px solid var(--accent);  box-shadow:0 2px 12px rgba(0,0,0,.5); }
+.dark .fiche-card { border-left:3px solid var(--accent2); box-shadow:0 2px 12px rgba(0,0,0,.5); }
+.dark .note-card-ico  { background:#1a2f4a; }
+.dark .fiche-card-ico { background:#163328; }
+.dark .type-badge     { background:#242d42; color:var(--accent); border-color:#344060; }
+.dark .home-card.blue  { border-left:3px solid var(--accent); }
+.dark .home-card.green { border-left:3px solid var(--accent2); }
+.dark input[type="date"].field-inp { color-scheme:dark; }
+/* ============================================================ TRANSITIONS */
+.phone,.app-header,.screen,.bottom-nav,
+.note-card,.fiche-card,.field-card,.home-card,
+.filter-panel,.chip,.field-inp,.note-textarea,
+.modal-overlay,.modal-box {
+  transition:background .22s ease,border-color .22s ease,color .22s ease,box-shadow .22s ease;
+}
+/* ============================================================ BASE */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; width:100%; overflow:hidden; font-family:'Raleway',sans-serif; background:var(--bg); color:var(--text); }
+.phone { width:100%; height:100%; position:relative; overflow:hidden; background:var(--bg); display:flex; flex-direction:column; }
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:10px; }
+/* ============================================================ HEADER */
+.app-header { background:var(--surface); height:58px; min-height:58px; padding:0 12px 0 16px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border); box-shadow:var(--shadow-sm); flex-shrink:0; }
+.app-title { font-size:1.1rem; font-weight:800; color:var(--accent); letter-spacing:-.02em; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.app-title.green { color:var(--accent2); }
+.header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+/* ============================================================ BOUTONS */
+.icon-btn { width:36px; height:36px; border-radius:var(--r-full); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; background:var(--neutral-light); color:var(--neutral); transition:transform .12s,background .15s; }
+.icon-btn:active { transform:scale(.88); }
+.icon-btn svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:2.3; }
+.icon-btn.blue   { background:var(--accent-light);  color:var(--accent); }
+.icon-btn.green  { background:var(--accent2-light); color:var(--accent2); }
+.icon-btn.danger { background:var(--danger-light);  color:var(--danger); }
+.pill-btn { background:var(--accent); color:white; border:none; padding:6px 14px; border-radius:var(--r-full); font-family:'Raleway',sans-serif; font-size:.72rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow-blue); transition:transform .1s; white-space:nowrap; }
+.pill-btn:active { transform:scale(.94); }
+.pill-btn.green { background:var(--accent2); box-shadow:var(--shadow-green); }
+.pill-btn.ghost { background:var(--danger-light); color:var(--danger); box-shadow:none; }
+.pill-btn.muted { background:var(--neutral-light); color:var(--neutral-dark); box-shadow:none; }
+.darkmode-btn { width:36px; height:36px; border-radius:var(--r-full); border:none; background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); flex-shrink:0; transition:color .2s,transform .15s; }
+.darkmode-btn:active { transform:scale(.88); }
+.darkmode-btn svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.2; }
+/* ============================================================ SCREENS */
+.screens { flex:1; overflow:hidden; position:relative; min-height:0; }
+.screen  { position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:none; flex-direction:column; padding-bottom:24px; }
+.screen.active { display:flex; }
+@keyframes slideInRight { from { transform:translateX(28px); opacity:0; } to { transform:none; opacity:1; } }
+@keyframes slideInLeft  { from { transform:translateX(-28px); opacity:0; } to { transform:none; opacity:1; } }
+.slide-in      { animation:slideInRight .2s ease; }
+.slide-in-left { animation:slideInLeft  .2s ease; }
+/* ============================================================ NAV + FAB */
+.bottom-nav { min-height:var(--nav-h); padding-bottom:env(safe-area-inset-bottom,0px); background:var(--surface); border-top:1px solid var(--border); display:flex; align-items:stretch; flex-shrink:0; }
+.nav-fab-wrap { flex:1; display:flex; align-items:flex-end; justify-content:center; padding-bottom:10px; }
+.fab { width:54px; height:54px; border-radius:var(--r-full); background:var(--accent); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--shadow-blue); transition:transform .15s; margin-bottom:4px; }
+.fab.green { background:var(--accent2); box-shadow:var(--shadow-green); }
+.fab:active { transform:scale(.92); }
+.fab svg { width:26px; height:26px; stroke:white; fill:none; stroke-width:2.5; }
+/* ============================================================ ACCUEIL */
+#screen-home { justify-content:center; align-items:center; padding:32px 20px; background:var(--bg); }
+.home-wrapper { display:flex; flex-direction:column; align-items:center; gap:24px; width:100%; }
+.home-greeting { text-align:center; }
+.home-greeting h1 { font-size:1.6rem; font-weight:800; color:var(--text); margin-bottom:6px; }
+.home-greeting p  { font-size:.84rem; color:var(--text-muted); font-weight:500; line-height:1.6; }
+.home-cards { display:flex; flex-direction:column; gap:14px; width:100%; max-width:400px; }
+.home-card { background:var(--surface); border-radius:var(--r-xl); padding:20px 18px; display:flex; align-items:center; gap:16px; cursor:pointer; border:1.5px solid var(--border); box-shadow:var(--shadow-md); transition:transform .15s; }
+.home-card:active { transform:scale(.97); }
+.home-card.blue  { border-color:var(--accent-light); }
+.home-card.green { border-color:var(--accent2-light); }
+.home-card-ico  { width:52px; height:52px; border-radius:var(--r-lg); display:flex; align-items:center; justify-content:center; font-size:1.7rem; flex-shrink:0; }
+.home-card.blue  .home-card-ico { background:var(--accent-light); }
+.home-card.green .home-card-ico { background:var(--accent2-light); }
+.home-card-body { flex:1; min-width:0; }
+.home-card-title { font-size:1rem; font-weight:800; color:var(--text); margin-bottom:3px; }
+.home-card-desc  { font-size:.77rem; color:var(--text-muted); font-weight:500; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.home-card-chevron svg { width:15px; height:15px; stroke:var(--text-subtle); fill:none; stroke-width:2.5; }
+/* ============================================================ TOPBAR */
+.topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.search-row { flex:1; display:flex; align-items:center; gap:8px; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-full); padding:8px 13px; transition:border-color .2s; }
+.search-row:focus-within       { border-color:var(--accent); }
+.search-row.green:focus-within { border-color:var(--accent2); }
+.search-row svg { width:14px; height:14px; stroke:var(--text-muted); fill:none; flex-shrink:0; }
+.search-row input { flex:1; border:none; outline:none; font-family:'Raleway',sans-serif; font-size:.78rem; font-weight:500; color:var(--text); background:transparent; }
+.search-row input::placeholder { color:var(--text-muted); }
+.search-clear { border:none; background:none; cursor:pointer; color:var(--text-muted); font-size:.78rem; font-weight:700; display:none; line-height:1; padding:0 2px; }
+.search-clear.on { display:block; }
+.filter-btn { display:flex; align-items:center; gap:5px; background:var(--neutral-light); border:1.5px solid var(--border); border-radius:var(--r-full); padding:6px 11px; font-family:'Raleway',sans-serif; font-size:.68rem; font-weight:700; color:var(--text-muted); cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .15s; }
+.filter-btn:active { transform:scale(.95); }
+.filter-btn.open       { background:var(--accent-light);  border-color:var(--accent);  color:var(--accent); }
+.filter-btn.open.green { background:var(--accent2-light); border-color:var(--accent2); color:var(--accent2); }
+.filter-dot { width:6px; height:6px; background:var(--danger); border-radius:50%; display:none; flex-shrink:0; }
+.filter-dot.on { display:block; }
+/* ============================================================ FILTRES */
+.filter-panel { background:var(--surface); border-bottom:1px solid var(--border); padding:0 14px; max-height:0; overflow:hidden; flex-shrink:0; transition:max-height .25s ease,padding .25s ease; }
+.filter-panel.open { max-height:340px; padding:12px 14px 14px; }
+.filter-section { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+.filter-section:last-child { margin-bottom:0; }
+.filter-lbl { font-size:.58rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); padding-left:2px; }
+.chips-scroll { display:flex; gap:5px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.chips-scroll::-webkit-scrollbar { display:none; }
+.chip { background:var(--surface2); border:1.5px solid var(--border); color:var(--text-muted); font-family:'Raleway',sans-serif; font-size:.67rem; font-weight:600; padding:4px 11px; border-radius:var(--r-full); cursor:pointer; white-space:nowrap; flex-shrink:0; transition:all .12s; }
+.chip:active { transform:scale(.95); }
+.chip.active       { background:var(--accent);  border-color:var(--accent);  color:white; }
+.chip.active.green { background:var(--accent2); border-color:var(--accent2); }
+/* ============================================================ META BAR */
+.meta-bar { display:flex; align-items:center; justify-content:space-between; padding:5px 14px 2px; flex-shrink:0; }
+.meta-label { font-size:.64rem; font-weight:700; color:var(--text-muted); }
+.reset-btn { display:none; align-items:center; gap:4px; background:var(--danger-light); color:var(--danger); border:none; font-family:'Raleway',sans-serif; font-size:.64rem; font-weight:700; padding:3px 9px; border-radius:var(--r-full); cursor:pointer; }
+.reset-btn.on { display:flex; }
+/* ============================================================ CARTES NOTES */
+.list-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:36px 28px; text-align:center; }
+.list-empty-emoji { font-size:2.8rem; }
+.list-empty h3 { font-size:.88rem; font-weight:700; color:var(--text); }
+.list-empty p  { font-size:.73rem; color:var(--text-muted); line-height:1.6; }
+.note-list { padding:6px 12px 0; display:flex; flex-direction:column; gap:8px; }
+.note-card { background:var(--surface); border-radius:var(--r-xl); padding:11px 13px; display:flex; align-items:flex-start; gap:10px; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .12s,box-shadow .12s; }
+.note-card:active { transform:scale(.97); box-shadow:none; }
+.note-card-ico { width:36px; height:36px; border-radius:var(--r-md); background:var(--accent-light); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.note-card-body    { flex:1; min-width:0; }
+.note-card-title   { font-size:.82rem; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; line-height:1.3; }
+.note-card-date    { font-size:.62rem; color:var(--text-muted); font-weight:500; margin-bottom:2px; }
+.note-card-preview { font-size:.65rem; color:var(--text-muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.note-card-chevron { margin-left:4px; margin-top:2px; }
+.note-card-chevron svg { width:12px; height:12px; stroke:var(--text-subtle); fill:none; stroke-width:2.5; }
+.type-badge { display:inline-block; background:var(--neutral-light); color:var(--neutral); font-size:.55rem; font-weight:700; letter-spacing:.06em; padding:2px 7px; border-radius:var(--r-full); margin-bottom:2px; border:1px solid var(--border); }
+mark { background:#fef08a; color:var(--text); border-radius:var(--r-sm); padding:0 2px; font-weight:700; }
+/* ============================================================ CARTES FICHES */
+.fiche-list { padding:6px 12px 0; display:flex; flex-direction:column; gap:8px; }
+.fiche-card { background:var(--surface); border-radius:var(--r-xl); padding:11px 13px; display:flex; align-items:flex-start; gap:10px; border:1.5px solid var(--accent2-light); box-shadow:var(--shadow-sm); cursor:pointer; transition:transform .12s; }
+.fiche-card:active { transform:scale(.97); }
+.fiche-card-ico     { width:36px; height:36px; border-radius:var(--r-md); background:var(--accent2-light); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.fiche-card-body    { flex:1; min-width:0; }
+.fiche-card-theme   { font-size:.57rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--accent2); margin-bottom:2px; }
+.fiche-card-title   { font-size:.8rem; font-weight:800; color:var(--text); line-height:1.35; margin-bottom:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.fiche-card-preview { font-size:.64rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fiche-card-chevron { margin-left:4px; margin-top:2px; }
+.fiche-card-chevron svg { width:12px; height:12px; stroke:var(--text-subtle); fill:none; stroke-width:2.5; }
+/* ============================================================ FORMULAIRES */
+.form-body { flex:1; padding:12px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.field-card { background:var(--surface); border-radius:var(--r-lg); padding:10px 13px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:5px; border:1px solid var(--border); }
+.field-lbl  { font-size:.65rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); opacity:.8; }
+.field-lbl.green { color:var(--accent2); }
+.field-inp { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-sm); padding:7px 10px; font-family:'Raleway',sans-serif; font-size:.76rem; font-weight:500; color:var(--text); width:100%; outline:none; transition:border-color .2s,box-shadow .2s; }
+.field-inp:focus       { border-color:var(--accent);  box-shadow:0 0 0 3px rgba(74,127,193,.12); }
+.field-inp.green:focus { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(91,158,138,.12); }
+.field-inp::placeholder { color:var(--text-muted); }
+input[type="date"].field-inp { cursor:pointer; color-scheme:light; }
+.field-select { appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:34px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 11px center; }
+.note-textarea { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-sm); padding:8px 10px; font-family:'Raleway',sans-serif; font-size:.76rem; font-weight:400; line-height:1.6; color:var(--text); width:100%; resize:none; outline:none; transition:border-color .2s,box-shadow .2s; }
+.note-textarea:focus       { border-color:var(--accent);  box-shadow:0 0 0 3px rgba(74,127,193,.10); }
+.note-textarea.green:focus { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(91,158,138,.10); }
+.note-textarea::placeholder { color:var(--text-muted); }
+.note-textarea.short { min-height:75px; }
+.hint-card { background:var(--accent-light); border-radius:var(--r-md); padding:8px 11px; display:flex; align-items:flex-start; gap:8px; font-size:.68rem; color:var(--accent-dark); font-weight:500; line-height:1.5; border:1px solid rgba(74,127,193,.12); }
+.hint-card.green { background:var(--accent2-light); color:var(--accent2-dark); border-color:rgba(91,158,138,.12); }
+.hint-card span:first-child { font-size:.85rem; flex-shrink:0; }
+.delete-card { background:var(--danger-light); border-radius:var(--r-lg); padding:9px 13px; border:1.5px solid rgba(224,90,90,.2); }
+.delete-btn { width:100%; background:transparent; color:var(--danger); border:none; font-family:'Raleway',sans-serif; font-size:.71rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; padding:2px 0; }
+.delete-btn svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2.5; }
+.delete-btn:active { opacity:.7; }
+/* Blocs multiples */
+.note-block-row,.rep-input-row { display:flex; gap:6px; align-items:flex-start; }
+.note-block-row .note-textarea,.rep-input-row .note-textarea { flex:1; }
+.note-block-num { width:18px; height:18px; border-radius:50%; background:var(--accent-light); color:var(--accent); font-size:.58rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:3px; border:1.5px solid var(--accent); }
+.rep-del-btn { background:var(--danger-light); border:none; border-radius:var(--r-sm); width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+.rep-del-btn svg { width:12px; height:12px; stroke:var(--danger); fill:none; stroke-width:2.5; }
+.add-note-btn,.add-reponse-btn { display:flex; align-items:center; justify-content:center; gap:6px; border-radius:var(--r-sm); padding:7px; cursor:pointer; font-family:'Raleway',sans-serif; font-size:.68rem; font-weight:700; transition:opacity .15s; }
+.add-note-btn:active,.add-reponse-btn:active { opacity:.8; }
+.add-note-btn    { background:var(--accent-light);  border:1.5px dashed var(--accent);  color:var(--accent); }
+.add-reponse-btn { background:var(--accent2-light); border:1.5px dashed var(--accent2); color:var(--accent2); }
+/* ============================================================ MODALES */
+.modal-overlay { display:none; position:absolute; inset:0; background:rgba(10,15,25,.6); z-index:500; align-items:flex-end; justify-content:center; backdrop-filter:blur(4px); }
+.modal-overlay.open { display:flex; }
+@keyframes slideUp { from { transform:translateY(100%); opacity:0; } to { transform:none; opacity:1; } }
+.modal-box { background:var(--surface); border-radius:var(--r-2xl) var(--r-2xl) 0 0; padding:20px 20px 32px; width:100%; max-width:480px; box-shadow:var(--shadow-md); border-top:1px solid var(--border); animation:slideUp .22s ease; }
+.modal-title { font-size:.95rem; font-weight:800; color:var(--text); margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+.modal-section { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.modal-section:last-child { margin-bottom:0; }
+.modal-section-lbl { font-size:.6rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--text-muted); }
+.modal-row { display:flex; gap:8px; flex-wrap:wrap; }
+.modal-btn { flex:1; min-width:120px; display:flex; align-items:center; gap:12px; text-align:left; background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--r-lg); padding:12px 14px; cursor:pointer; transition:all .15s; font-family:'Raleway',sans-serif; font-size:.8rem; font-weight:700; color:var(--text); }
+.modal-btn:active { transform:scale(.97); }
+.modal-btn svg { width:18px; height:18px; fill:none; stroke-width:2.2; flex-shrink:0; }
+.modal-btn.blue  { border-color:var(--accent-light);  }
+.modal-btn.green { border-color:var(--accent2-light); }
+.modal-btn.warn  { border-color:var(--warning-light); }
+.modal-btn.blue  svg { stroke:var(--accent); }
+.modal-btn.green svg { stroke:var(--accent2); }
+.modal-btn.warn  svg { stroke:var(--warning); }
+.modal-btn-label { display:flex; flex-direction:column; gap:2px; }
+.modal-btn-title { font-size:.8rem; font-weight:700; color:var(--text); }
+.modal-btn-sub   { font-size:.67rem; font-weight:500; color:var(--text-muted); }
+/* ============================================================ TOAST */
+.toast { position:absolute; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:#1a2333; color:#eaf0fa; padding:11px 18px; border-radius:var(--r-full); font-family:'Raleway',sans-serif; font-size:.82rem; font-weight:600; display:flex; align-items:center; gap:10px; box-shadow:0 4px 20px rgba(0,0,0,.35); z-index:600; opacity:0; pointer-events:none; white-space:nowrap; transition:opacity .2s ease,transform .2s ease; }
+.dark .toast { background:#e2e8f0; color:#1a2333; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast-icon { font-size:1rem; flex-shrink:0; }
+/* ============================================================ GOOGLE DRIVE */
+.drive-home-btn { display:flex; align-items:center; gap:12px; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r-xl); padding:14px 16px; width:100%; max-width:400px; cursor:pointer; box-shadow:var(--shadow-sm); transition:transform .15s,box-shadow .15s; }
+.drive-home-btn:active { transform:scale(.97); box-shadow:none; }
+.drive-home-ico { width:36px; height:36px; border-radius:var(--r-md); background:#f0f4ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.dark .drive-home-ico { background:#1a243a; }
+.drive-home-label { flex:1; min-width:0; text-align:left; }
+.drive-home-title { display:block; font-size:.82rem; font-weight:800; color:var(--text); }
+.drive-home-sub   { display:block; font-size:.65rem; color:var(--text-muted); font-weight:500; margin-top:1px; }
+.drive-home-status { width:8px; height:8px; border-radius:50%; background:var(--border); flex-shrink:0; transition:background .3s; }
+.drive-home-status.connected { background:#34a853; }
+.drive-signin-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:white; border:1.5px solid #dadce0; border-radius:var(--r-lg); padding:12px 16px; font-family:'Raleway',sans-serif; font-size:.8rem; font-weight:700; color:#3c4043; cursor:pointer; transition:box-shadow .15s; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+.drive-signin-btn:hover { box-shadow:0 2px 8px rgba(0,0,0,.15); }
+.drive-signin-btn:active { transform:scale(.97); }
+.dark .drive-signin-btn { background:#2d3748; border-color:#4a5568; color:var(--text); }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="app-header">
+    <span class="app-title" id="header-title">FormaNotes</span>
+    <div class="header-right" id="header-right"></div>
+    <button class="darkmode-btn" onclick="DarkMode.toggle()" title="Mode sombre">
+      <svg id="dark-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <div class="screens">
+
+    <!-- ACCUEIL -->
+    <div class="screen active" id="screen-home">
+      <div class="home-wrapper">
+        <div class="home-greeting"><h1>Bonjour 👋</h1><p>Que souhaitez-vous consulter ?</p></div>
+        <div class="home-cards">
+          <div class="home-card blue" onclick="goModule('notes')">
+            <div class="home-card-ico">📋</div>
+            <div class="home-card-body"><div class="home-card-title">FormaNotes</div><div class="home-card-desc">Prises de notes de vos sessions de formation</div></div>
+            <div class="home-card-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+          <div class="home-card green" onclick="goModule('fiches')">
+            <div class="home-card-ico">💡</div>
+            <div class="home-card-body"><div class="home-card-title">Fiches réflexes</div><div class="home-card-desc">Réponses types aux objections par thème</div></div>
+            <div class="home-card-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+        </div>
+        <button class="pill-btn muted" onclick="Export.open()" style="display:flex;align-items:center;gap:7px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Importer / Exporter
+        </button>
+        <button class="drive-home-btn" id="drive-home-btn" onclick="GDrive.openModal()">
+          <span class="drive-home-ico">
+            <svg viewBox="0 0 87.3 78" width="16" height="16"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z" fill="#ea4335"/><path d="M43.65 25L57.4 0H29.9z" fill="#00832d"/><path d="M59.8 53H87.3c0-1.55-.4-3.1-1.2-4.5L60.8 3.3c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25z" fill="#2684fc"/><path d="M27.5 53L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.8 53z" fill="#ffba00"/></svg>
+          </span>
+          <span class="drive-home-label">
+            <span class="drive-home-title">Google Drive</span>
+            <span class="drive-home-sub" id="drive-status-label">Non connecté</span>
+          </span>
+          <span class="drive-home-status" id="drive-status-dot"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- NOTES LISTE -->
+    <div class="screen" id="screen-list">
+      <div class="topbar">
+        <div class="search-row">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="notes-search-inp" placeholder="Rechercher…" oninput="Notes.onSearch()">
+          <button class="search-clear" id="notes-search-clear" onclick="Notes.clearSearch()">✕</button>
+        </div>
+        <button class="filter-btn" id="notes-filter-btn" onclick="Notes.togglePanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          Filtres <span class="filter-dot" id="notes-fdot"></span>
+        </button>
+      </div>
+      <div class="filter-panel" id="notes-panel">
+        <div class="filter-section">
+          <div class="filter-lbl">Type de formation</div>
+          <div class="chips-scroll" id="ft-types">
+            <button class="chip active" onclick="Notes.setType(this,'')">Tous</button>
+            <button class="chip" onclick="Notes.setType(this,'TACT')">TACT</button>
+            <button class="chip" onclick="Notes.setType(this,'Mixité')">Mixité</button>
+            <button class="chip" onclick="Notes.setType(this,'Atelier CODIR')">Atelier CODIR</button>
+            <button class="chip" onclick="Notes.setType(this,'Conférence')">Conférence</button>
+            <button class="chip" onclick="Notes.setType(this,'Atelier Sens au travail')">Sens au travail</button>
+            <button class="chip" onclick="Notes.setType(this,'Autres')">Autres</button>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-lbl">Période</div>
+          <div class="chips-scroll" id="ft-periods">
+            <button class="chip active" onclick="Notes.setPeriod(this,'')">Toutes</button>
+            <button class="chip" onclick="Notes.setPeriod(this,'7')">7 jours</button>
+            <button class="chip" onclick="Notes.setPeriod(this,'30')">30 jours</button>
+            <button class="chip" onclick="Notes.setPeriod(this,'90')">3 mois</button>
+            <button class="chip" onclick="Notes.setPeriod(this,'365')">1 an</button>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-lbl">Trier par</div>
+          <div class="chips-scroll" id="ft-sorts">
+            <button class="chip active" onclick="Notes.setSort(this,'date-desc')">📅 Date ↓</button>
+            <button class="chip" onclick="Notes.setSort(this,'date-asc')">📅 Date ↑</button>
+            <button class="chip" onclick="Notes.setSort(this,'alpha')">🔤 A→Z</button>
+          </div>
+        </div>
+      </div>
+      <div class="meta-bar">
+        <span class="meta-label" id="notes-count"></span>
+        <button class="reset-btn" id="notes-reset" onclick="Notes.resetFilters()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Réinitialiser
+        </button>
+      </div>
+      <div id="notes-content"></div>
+    </div>
+
+    <!-- NOTES NOUVELLE -->
+    <div class="screen" id="screen-new">
+      <div class="form-body">
+        <div class="hint-card"><span>💡</span><span>Renseignez le nom de la formation et la date, puis rédigez vos notes.</span></div>
+        <div class="field-card">
+          <div class="field-lbl">Nom / Contexte de la formation</div>
+          <input type="text" class="field-inp" id="new-formation" placeholder="Ex : Formation BIM — AMO" autocomplete="off">
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Type de formation</div>
+          <select class="field-inp field-select" id="new-type">
+            <option value="" disabled selected>— Sélectionner un type —</option>
+            <option>TACT</option><option>Mixité</option><option>Atelier CODIR</option>
+            <option>Conférence</option><option>Atelier Sens au travail</option><option>Autres</option>
+          </select>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Date de la session</div>
+          <input type="date" class="field-inp" id="new-date">
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Notes</div>
+          <div id="new-notes-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="add-note-btn" onclick="Notes.addBlock('new')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une note
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES ÉDITEUR -->
+    <div class="screen" id="screen-edit">
+      <div class="form-body">
+        <div class="field-card">
+          <div class="field-lbl">Nom / Contexte de la formation</div>
+          <input type="text" class="field-inp" id="ed-formation" placeholder="Formation…" oninput="State.markDirty()">
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Type de formation</div>
+          <select class="field-inp field-select" id="ed-type" onchange="State.markDirty()">
+            <option value="" disabled>— Sélectionner —</option>
+            <option>TACT</option><option>Mixité</option><option>Atelier CODIR</option>
+            <option>Conférence</option><option>Atelier Sens au travail</option><option>Autres</option>
+          </select>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Date de la session</div>
+          <input type="date" class="field-inp" id="ed-date" oninput="State.markDirty()">
+        </div>
+        <div class="field-card">
+          <div class="field-lbl">Notes</div>
+          <div id="ed-notes-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="add-note-btn" onclick="Notes.addBlock('ed')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une note
+          </button>
+        </div>
+        <div class="delete-card">
+          <button class="delete-btn" onclick="Notes.confirmDelete()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+            Supprimer cette note
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHES LISTE -->
+    <div class="screen" id="screen-fiches">
+      <div class="topbar">
+        <div class="search-row green">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="fiches-search-inp" placeholder="Rechercher une objection…" oninput="Fiches.onSearch()">
+          <button class="search-clear" id="fiches-search-clear" onclick="Fiches.clearSearch()">✕</button>
+        </div>
+        <button class="filter-btn" id="fiches-filter-btn" onclick="Fiches.togglePanel()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          Filtres <span class="filter-dot" id="fiches-fdot"></span>
+        </button>
+      </div>
+      <div class="filter-panel" id="fiches-panel">
+        <div class="filter-section">
+          <div class="filter-lbl">Thème</div>
+          <div class="chips-scroll" id="ft-themes">
+            <button class="chip active green" onclick="Fiches.setTheme(this,'')">Tous</button>
+            <button class="chip" onclick="Fiches.setTheme(this,'Sexisme')">Sexisme</button>
+            <button class="chip" onclick="Fiches.setTheme(this,'Quotas')">Quotas</button>
+            <button class="chip" onclick="Fiches.setTheme(this,'Chiffres')">Chiffres</button>
+            <button class="chip" onclick="Fiches.setTheme(this,'Mixité')">Mixité</button>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div class="filter-lbl">Trier par</div>
+          <div class="chips-scroll" id="ft-fsorts">
+            <button class="chip active green" onclick="Fiches.setSort(this,'alpha')">🔤 A→Z</button>
+            <button class="chip" onclick="Fiches.setSort(this,'theme')">📂 Thème</button>
+            <button class="chip" onclick="Fiches.setSort(this,'recent')">🕐 Récent</button>
+          </div>
+        </div>
+      </div>
+      <div class="meta-bar">
+        <span class="meta-label" id="fiches-count"></span>
+        <button class="reset-btn" id="fiches-reset" onclick="Fiches.resetFilters()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>Réinitialiser
+        </button>
+      </div>
+      <div id="fiches-content"></div>
+    </div>
+
+    <!-- FICHES NOUVELLE -->
+    <div class="screen" id="screen-fiche-new">
+      <div class="form-body">
+        <div class="hint-card green"><span>💡</span><span>Saisissez l'objection entendue et rédigez une ou plusieurs réponses types.</span></div>
+        <div class="field-card">
+          <div class="field-lbl green">Thème</div>
+          <select class="field-inp field-select green" id="fn-theme">
+            <option value="" disabled selected>— Sélectionner un thème —</option>
+            <option>Sexisme</option><option>Quotas</option><option>Chiffres</option><option>Mixité</option>
+          </select>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl green">Objection / Question posée</div>
+          <textarea class="note-textarea short green" id="fn-objection" placeholder="Ex : « Les femmes sont moins ambitieuses que les hommes »"></textarea>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl green">Réponses</div>
+          <div id="fn-reponses-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="add-reponse-btn" onclick="Fiches.addReponse('fn')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une réponse
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHES ÉDITEUR -->
+    <div class="screen" id="screen-fiche-edit">
+      <div class="form-body">
+        <div class="field-card">
+          <div class="field-lbl green">Thème</div>
+          <select class="field-inp field-select green" id="fe-theme" onchange="State.markFicheDirty()">
+            <option value="" disabled>— Sélectionner —</option>
+            <option>Sexisme</option><option>Quotas</option><option>Chiffres</option><option>Mixité</option>
+          </select>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl green">Objection / Question posée</div>
+          <textarea class="note-textarea short green" id="fe-objection" placeholder="Objection…" oninput="State.markFicheDirty()"></textarea>
+        </div>
+        <div class="field-card">
+          <div class="field-lbl green">Réponses</div>
+          <div id="fe-reponses-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <button class="add-reponse-btn" onclick="Fiches.addReponse('fe')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une réponse
+          </button>
+        </div>
+        <div class="delete-card">
+          <button class="delete-btn" onclick="Fiches.confirmDelete()">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+            Supprimer cette fiche
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <div class="toast" id="toast"><span class="toast-icon" id="toast-icon">✓</span><span id="toast-msg"></span></div>
+
+  <nav class="bottom-nav" id="bottom-nav" style="display:none">
+    <div class="nav-fab-wrap">
+      <button class="fab" id="main-fab" onclick="Nav.onFabClick()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODALE EXPORT/IMPORT -->
+  <div class="modal-overlay" id="modal-io" onclick="if(event.target===this)Export.close()">
+    <div class="modal-box">
+      <div id="exp-step1">
+        <div class="modal-title">Données <button class="icon-btn" onclick="Export.close()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+        <div class="modal-section">
+          <div class="modal-section-lbl">Que souhaitez-vous faire ?</div>
+          <div class="modal-row" style="flex-direction:column;gap:8px">
+            <button class="modal-btn blue" onclick="Export.goStep(2)">
+              <svg viewBox="0 0 24 24" class="blue"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">Exporter</div><div class="modal-btn-sub">Sauvegarder mes données</div></div>
+              <svg viewBox="0 0 24 24" style="stroke:var(--border);fill:none;stroke-width:2.5;width:14px;height:14px;margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="modal-btn warn" onclick="document.getElementById('import-file').click()">
+              <svg viewBox="0 0 24 24" class="warn"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">Importer JSON</div><div class="modal-btn-sub">Fusion avec données existantes</div></div>
+            </button>
+          </div>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="Export.importJSON(event)">
+        </div>
+      </div>
+      <div id="exp-step2" style="display:none">
+        <div class="modal-title">
+          <button class="icon-btn" onclick="Export.goStep(1)" style="margin-right:8px"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+          Exporter — Quelle section ?
+          <button class="icon-btn" onclick="Export.close()" style="margin-left:auto"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-section">
+          <div class="modal-row" style="flex-direction:column;gap:8px">
+            <button class="modal-btn blue" onclick="Export.goStep(3,'notes')">
+              <svg viewBox="0 0 24 24" class="blue"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">FormaNotes</div><div class="modal-btn-sub" id="exp-notes-count"></div></div>
+              <svg viewBox="0 0 24 24" style="stroke:var(--border);fill:none;stroke-width:2.5;width:14px;height:14px;margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="modal-btn green" onclick="Export.goStep(3,'fiches')">
+              <svg viewBox="0 0 24 24" class="green"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">Fiches réflexes</div><div class="modal-btn-sub" id="exp-fiches-count"></div></div>
+              <svg viewBox="0 0 24 24" style="stroke:var(--border);fill:none;stroke-width:2.5;width:14px;height:14px;margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+            <button class="modal-btn" style="border-color:var(--neutral-light)" onclick="Export.goStep(3,'all')">
+              <svg viewBox="0 0 24 24" style="stroke:var(--neutral);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">Tout</div><div class="modal-btn-sub">Notes + Fiches réflexes</div></div>
+              <svg viewBox="0 0 24 24" style="stroke:var(--border);fill:none;stroke-width:2.5;width:14px;height:14px;margin-left:auto;flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="exp-step3" style="display:none">
+        <div class="modal-title">
+          <button class="icon-btn" onclick="Export.goStep(2)" style="margin-right:8px"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+          <span id="exp-step3-title">Format</span>
+          <button class="icon-btn" onclick="Export.close()" style="margin-left:auto"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div id="exp-filter-section" style="display:none" class="modal-section">
+          <div class="modal-section-lbl" id="exp-filter-label">Filtrer par</div>
+          <div id="exp-filter-chips" class="chips-scroll" style="padding-bottom:4px"></div>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-lbl">Format</div>
+          <div class="modal-row" style="flex-direction:column;gap:8px">
+            <button class="modal-btn" onclick="Export.run('json')">
+              <svg viewBox="0 0 24 24" style="stroke:var(--neutral);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">JSON</div><div class="modal-btn-sub">Sauvegarde / réimport</div></div>
+            </button>
+            <button class="modal-btn green" onclick="Export.run('pdf')">
+              <svg viewBox="0 0 24 24" class="green"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="modal-btn-label"><div class="modal-btn-title">PDF</div><div class="modal-btn-sub">Document imprimable</div></div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE CONFIRMATION -->
+  <div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this)UI.confirmNo()">
+    <div class="modal-box" style="padding-bottom:24px">
+      <div style="text-align:center;padding:8px 0 20px">
+        <div style="font-size:2.2rem;margin-bottom:12px">🗑️</div>
+        <div class="modal-title" style="justify-content:center;margin-bottom:6px" id="confirm-title">Supprimer ?</div>
+        <div id="confirm-subtitle" style="font-size:.8rem;color:var(--text-muted);font-weight:500;line-height:1.5;padding:0 8px"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="pill-btn ghost" onclick="UI.confirmNo()" style="flex:1;justify-content:center;display:flex">Annuler</button>
+        <button class="pill-btn" onclick="UI.confirmYes()" style="flex:1;justify-content:center;display:flex;background:var(--danger);box-shadow:none">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE GOOGLE DRIVE -->
+  <div class="modal-overlay" id="modal-drive" onclick="if(event.target===this)GDrive.closeModal()">
+    <div class="modal-box">
+      <!-- Étape 1 : connexion -->
+      <div id="drive-step-connect">
+        <div class="modal-title">
+          <span style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 87.3 78" width="18" height="18"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z" fill="#ea4335"/><path d="M43.65 25L57.4 0H29.9z" fill="#00832d"/><path d="M59.8 53H87.3c0-1.55-.4-3.1-1.2-4.5L60.8 3.3c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25z" fill="#2684fc"/><path d="M27.5 53L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.8 53z" fill="#ffba00"/></svg>
+            Google Drive
+          </span>
+          <button class="icon-btn" onclick="GDrive.closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div style="text-align:center;padding:16px 0 20px;display:flex;flex-direction:column;align-items:center;gap:12px">
+          <div style="font-size:2.4rem">☁️</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--text)">Connectez votre compte Google</div>
+          <div style="font-size:.73rem;color:var(--text-muted);line-height:1.55;max-width:260px">Vos données seront sauvegardées dans un dossier <strong>FormaNotes</strong> sur votre Drive.</div>
+        </div>
+        <button class="drive-signin-btn" onclick="GDrive.signIn()">
+          <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+          Se connecter avec Google
+        </button>
+      </div>
+      <!-- Étape 2 : choix section -->
+      <div id="drive-step-choice" style="display:none">
+        <div class="modal-title">
+          <span style="display:flex;align-items:center;gap:8px">
+            <svg viewBox="0 0 87.3 78" width="18" height="18"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z" fill="#ea4335"/><path d="M43.65 25L57.4 0H29.9z" fill="#00832d"/><path d="M59.8 53H87.3c0-1.55-.4-3.1-1.2-4.5L60.8 3.3c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25z" fill="#2684fc"/><path d="M27.5 53L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.8 53z" fill="#ffba00"/></svg>
+            Sauvegarder sur Drive
+          </span>
+          <button class="icon-btn" onclick="GDrive.closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div id="drive-user-info" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:16px;border:1px solid var(--border)">
+          <img id="drive-avatar" src="" width="28" height="28" style="border-radius:50%;display:none">
+          <div style="flex:1;min-width:0">
+            <div id="drive-user-name" style="font-size:.75rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="drive-user-email" style="font-size:.62rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          </div>
+          <button onclick="GDrive.signOut()" style="background:none;border:none;font-size:.62rem;font-weight:700;color:var(--danger);cursor:pointer;flex-shrink:0">Déconnexion</button>
+        </div>
+        <div class="modal-section">
+          <div class="modal-section-lbl">Que sauvegarder ?</div>
+          <div class="modal-row" style="flex-direction:column;gap:8px">
+            <button class="modal-btn blue" onclick="GDrive.save('notes')">
+              <svg viewBox="0 0 24 24" style="stroke:var(--accent);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="modal-btn-label">
+                <div class="modal-btn-title">FormaNotes</div>
+                <div class="modal-btn-sub" id="drive-notes-count"></div>
+              </div>
+            </button>
+            <button class="modal-btn green" onclick="GDrive.save('fiches')">
+              <svg viewBox="0 0 24 24" style="stroke:var(--accent2);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div class="modal-btn-label">
+                <div class="modal-btn-title">Fiches réflexes</div>
+                <div class="modal-btn-sub" id="drive-fiches-count"></div>
+              </div>
+            </button>
+            <button class="modal-btn" onclick="GDrive.save('all')" style="border-color:var(--neutral-light)">
+              <svg viewBox="0 0 24 24" style="stroke:var(--neutral);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <div class="modal-btn-label">
+                <div class="modal-btn-title">Tout sauvegarder</div>
+                <div class="modal-btn-sub">Notes + Fiches en un fichier</div>
+              </div>
+            </button>
+          </div>
+        </div>
+        <div id="drive-saving" style="display:none;text-align:center;padding:16px 0;font-size:.78rem;color:var(--text-muted);font-weight:600">
+          <div style="margin-bottom:8px">⏳ Sauvegarde en cours…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+<script>
+'use strict';
+/* ---- PERSISTANCE ---- */
+const DB = {
+  KEYS: { notes:'formanotes-v2', fiches:'formanotes-fiches', dark:'formanotes-dark' },
+  load(k)   { try { return JSON.parse(localStorage.getItem(k)||'[]'); } catch { return []; } },
+  save(k,v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+/* ---- ÉTAT ---- */
+const State = {
+  notes:  DB.load(DB.KEYS.notes),
+  fiches: DB.load(DB.KEYS.fiches),
+  activeNoteId:  null,
+  activeFicheId: null,
+  dirty:      false,
+  ficheDirty: false,
+  module:     'home',
+  saveNotes()      { DB.save(DB.KEYS.notes,  this.notes);  },
+  saveFiches()     { DB.save(DB.KEYS.fiches, this.fiches); },
+  markDirty()      { this.dirty = true; },
+  markFicheDirty() { this.ficheDirty = true; }
+};
+/* ---- UTILS ---- */
+const U = {
+  fmt(d)  { if(!d) return ''; const [y,m,j]=d.split('-'); return `${j}/${m}/${y}`; },
+  esc(t)  { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
+  uid(p)  { return p+'_'+Date.now(); },
+  slug(s) { return s.toLowerCase().replace(/\s+/g,'-'); },
+  hl(text,q) {
+    if(!q) return U.esc(text);
+    return U.esc(text).replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>`<mark>${m}</mark>`);
+  },
+  dl(blob,name) { const u=URL.createObjectURL(blob),a=Object.assign(document.createElement('a'),{href:u,download:name}); a.click(); URL.revokeObjectURL(u); }
+};
+/* ---- UI ---- */
+const UI = {
+  _t: null, _cb: null,
+  toast(msg, icon='✓', ms=2500) {
+    clearTimeout(this._t);
+    document.getElementById('toast-icon').textContent = icon;
+    document.getElementById('toast-msg').textContent  = msg;
+    const el = document.getElementById('toast');
+    el.classList.add('show');
+    this._t = setTimeout(()=>el.classList.remove('show'), ms);
+  },
+  confirm(title, sub, cb) {
+    this._cb = cb;
+    document.getElementById('confirm-title').textContent    = title;
+    document.getElementById('confirm-subtitle').textContent = sub;
+    document.getElementById('modal-confirm').classList.add('open');
+  },
+  confirmYes() { document.getElementById('modal-confirm').classList.remove('open'); if(this._cb){this._cb();this._cb=null;} },
+  confirmNo()  { document.getElementById('modal-confirm').classList.remove('open'); this._cb=null; }
+};
+/* ---- NAVIGATION ---- */
+const Nav = {
+  SVG: {
+    home: `<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+    back: `<polyline points="15 18 9 12 15 6"/>`,
+    x:    `<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>`,
+    plus: `<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>`
+  },
+  show(id,anim) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el=document.getElementById(id); el.classList.add('active');
+    if(anim){el.classList.add(anim);setTimeout(()=>el.classList.remove(anim),300);}
+  },
+  setHeader(title,green,rightHTML,showFab,fabGreen) {
+    const t=document.getElementById('header-title');
+    t.textContent=title; t.className='app-title'+(green?' green':'');
+    document.getElementById('header-right').innerHTML=rightHTML||'';
+    document.getElementById('bottom-nav').style.display=showFab?'':'none';
+    document.getElementById('main-fab').className='fab'+(fabGreen?' green':'');
+  },
+  ib(cls,fn,svg)    { return `<button class="icon-btn ${cls}" onclick="${fn}"><svg viewBox="0 0 24 24">${svg}</svg></button>`; },
+  pb(cls,fn,label)  { return `<button class="pill-btn ${cls}" onclick="${fn}">${label}</button>`; },
+  onFabClick() { if(State.module==='notes') Notes.go('new'); else if(State.module==='fiches') Fiches.go('new'); },
+  goHome() {
+    if((State.dirty||State.ficheDirty)&&!confirm('Modifications non enregistrées. Continuer ?')) return;
+    State.dirty=State.ficheDirty=false; State.module='home';
+    this.show('screen-home','slide-in-left');
+    this.setHeader('FormaNotes',false,'',false,false);
+  }
+};
+function goModule(mod) {
+  State.module=mod;
+  if(mod==='notes') { Nav.show('screen-list','slide-in'); Nav.setHeader('FormaNotes',false,Nav.ib('','Nav.goHome()',Nav.SVG.home),true,false); Notes.render(); }
+  else { Nav.show('screen-fiches','slide-in'); Nav.setHeader('Fiches réflexes',true,Nav.ib('green','Nav.goHome()',Nav.SVG.home),true,true); Fiches.render(); }
+}
+/* ============================================================
+   MODULE NOTES
+   ============================================================ */
+const Notes = {
+  f: { kw:'', type:'', period:'', sort:'date-desc', panel:false },
+  go(screen, id) {
+    State.dirty=false;
+    if(screen==='list') {
+      Nav.show('screen-list','slide-in-left');
+      Nav.setHeader('FormaNotes',false,Nav.ib('','Nav.goHome()',Nav.SVG.home),true,false);
+      this.render();
+    } else if(screen==='new') {
+      document.getElementById('new-date').value=new Date().toISOString().split('T')[0];
+      ['new-formation','new-type'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('new-notes-list').innerHTML='';
+      this.addBlock('new');
+      Nav.show('screen-new','slide-in');
+      Nav.setHeader('Nouvelle note',false,Nav.pb('ghost',"Notes.go('list')",'Annuler')+Nav.pb('','Notes.create()','Créer'),false,false);
+      setTimeout(()=>document.getElementById('new-formation').focus(),200);
+    } else if(screen==='edit') {
+      State.activeNoteId=id;
+      const n=State.notes.find(x=>x.id===id); if(!n){this.go('list');return;}
+      document.getElementById('ed-formation').value=n.formation||'';
+      document.getElementById('ed-type').value=n.type||'';
+      document.getElementById('ed-date').value=n.date||'';
+      const list=document.getElementById('ed-notes-list'); list.innerHTML='';
+      const blocks=Array.isArray(n.blocks)?n.blocks:(n.content?[n.content]:['']);
+      blocks.forEach(b=>this.addBlock('ed',b));
+      if(!blocks.length) this.addBlock('ed');
+      Nav.show('screen-edit','slide-in');
+      Nav.setHeader(n.formation||'Note',false,Nav.ib('blue',"Notes.go('list')",Nav.SVG.back)+Nav.pb('','Notes.save()','Enregistrer'),false,false);
+    }
+  },
+  addBlock(prefix,val='') {
+    const list=document.getElementById(prefix+'-notes-list');
+    const idx=list.children.length+1;
+    const div=document.createElement('div'); div.className='note-block-row';
+    div.innerHTML=`<div class="note-block-num">${idx}</div>`+
+      `<textarea class="note-textarea short" placeholder="Note ${idx}…" oninput="State.markDirty();Notes._renum('${prefix}')">${U.esc(val)}</textarea>`+
+      `<button class="rep-del-btn" onclick="this.parentElement.remove();State.markDirty();Notes._renum('${prefix}')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+    list.appendChild(div);
+  },
+  _renum(p) { document.querySelectorAll(`#${p}-notes-list .note-block-num`).forEach((el,i)=>el.textContent=i+1); },
+  _blocks(p) { return Array.from(document.querySelectorAll(`#${p}-notes-list textarea`)).map(t=>t.value.trim()).filter(Boolean); },
+  create() {
+    const formation=document.getElementById('new-formation').value.trim();
+    if(!formation){const i=document.getElementById('new-formation');i.style.borderColor='var(--danger)';i.focus();setTimeout(()=>i.style.borderColor='',1500);return;}
+    const blocks=this._blocks('new');
+    State.notes.push({id:U.uid('n'),formation,type:document.getElementById('new-type').value,date:document.getElementById('new-date').value,blocks,content:blocks.join('\n\n')});
+    State.saveNotes(); this.go('list'); UI.toast('Note créée ✓','📋');
+  },
+  save() {
+    const n=State.notes.find(x=>x.id===State.activeNoteId); if(!n) return;
+    n.formation=document.getElementById('ed-formation').value;
+    n.type=document.getElementById('ed-type').value;
+    n.date=document.getElementById('ed-date').value;
+    n.blocks=this._blocks('ed'); n.content=n.blocks.join('\n\n');
+    State.dirty=false; State.saveNotes(); this.go('list'); UI.toast('Note enregistrée ✓','📋');
+  },
+  confirmDelete() {
+    const n=State.notes.find(x=>x.id===State.activeNoteId);
+    UI.confirm('Supprimer cette note ?',n?.formation||'Note sans titre',()=>{
+      State.notes=State.notes.filter(x=>x.id!==State.activeNoteId);
+      State.activeNoteId=null; State.dirty=false; State.saveNotes(); this.go('list'); UI.toast('Note supprimée','🗑️');
+    });
+  },
+  togglePanel() {
+    this.f.panel=!this.f.panel;
+    document.getElementById('notes-panel').classList.toggle('open',this.f.panel);
+    document.getElementById('notes-filter-btn').classList.toggle('open',this.f.panel);
+  },
+  _chip(sel,btn,green=false) { document.querySelectorAll(sel+' .chip').forEach(c=>c.classList.remove('active','green')); btn.classList.add('active'); if(green) btn.classList.add('green'); },
+  setType(b,v)   { this.f.type=v;   this._chip('#ft-types',b);   this.render(); },
+  setPeriod(b,v) { this.f.period=v; this._chip('#ft-periods',b); this.render(); },
+  setSort(b,v)   { this.f.sort=v;   this._chip('#ft-sorts',b);   this.render(); },
+  onSearch()  { this.f.kw=document.getElementById('notes-search-inp').value; document.getElementById('notes-search-clear').classList.toggle('on',this.f.kw.length>0); this.render(); },
+  clearSearch(){ document.getElementById('notes-search-inp').value=''; this.f.kw=''; document.getElementById('notes-search-clear').classList.remove('on'); this.render(); },
+  resetFilters(){
+    this.f={...this.f,kw:'',type:'',period:'',sort:'date-desc'};
+    document.getElementById('notes-search-inp').value='';
+    document.getElementById('notes-search-clear').classList.remove('on');
+    ['#ft-types','#ft-periods','#ft-sorts'].forEach(sel=>document.querySelectorAll(sel+' .chip').forEach((c,i)=>c.classList.toggle('active',i===0)));
+    this.render();
+  },
+  render() {
+    const el=document.getElementById('notes-content'), f=this.f, q=f.kw.toLowerCase().trim();
+    const today=new Date(); today.setHours(0,0,0,0);
+    let m=State.notes.filter(n=>{
+      const allText=[n.formation,n.type,...(n.blocks||[n.content||''])].join(' ').toLowerCase();
+      const kw=!q||allText.includes(q);
+      const tp=!f.type||(n.type||'')===f.type;
+      let pd=true; if(f.period&&n.date){const d=(today-new Date(n.date))/86400000;pd=d>=0&&d<=+f.period;}
+      return kw&&tp&&pd;
+    });
+    m.sort((a,b)=>{
+      if(f.sort==='date-desc') return (b.date||'').localeCompare(a.date||'');
+      if(f.sort==='date-asc')  return (a.date||'').localeCompare(b.date||'');
+      return (a.formation||'').localeCompare(b.formation||'','fr',{sensitivity:'base'});
+    });
+    const hf=q||f.type||f.period||f.sort!=='date-desc';
+    document.getElementById('notes-reset').classList.toggle('on',hf);
+    document.getElementById('notes-fdot').classList.toggle('on',hf);
+    const nn=State.notes.length, nm=m.length;
+    document.getElementById('notes-count').textContent=!nn?'':nm===nn?`${nn} note${nn>1?'s':''}`:`${nm} résultat${nm>1?'s':''} sur ${nn}`;
+    if(!nn){el.innerHTML=`<div class="list-empty"><div class="list-empty-emoji">📋</div><h3>Aucune note</h3><p>Appuyez sur <strong>+</strong> pour créer votre première note.</p></div>`;return;}
+    if(!nm){el.innerHTML=`<div class="list-empty"><div class="list-empty-emoji">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères ou réinitialisez les filtres.</p></div>`;return;}
+    el.innerHTML=`<div class="note-list">${m.map(n=>{
+      const txt=[n.formation,n.type,...(n.blocks||[n.content||''])].join(' ');
+      let prev='';
+      if(q){const i=txt.toLowerCase().indexOf(q);if(i!==-1){const s=Math.max(0,i-20);prev=U.hl((s>0?'…':'')+txt.substring(s,i+60)+(i+60<txt.length?'…':''),q);}else prev=U.esc(txt.substring(0,80))+(txt.length>80?'…':'');}
+      else{const c=(n.blocks||[n.content||'']).join(' ');prev=U.esc(c.substring(0,80))+(c.length>80?'…':'');}
+      return `<div class="note-card" onclick="Notes.go('edit','${n.id}')">
+        <div class="note-card-ico">📝</div>
+        <div class="note-card-body">
+          <div class="note-card-title">${U.hl(n.formation||'(sans titre)',q)}</div>
+          ${n.type?`<div><span class="type-badge">${U.esc(n.type)}</span></div>`:''}
+          <div class="note-card-date">${U.fmt(n.date)||'Date non définie'}</div>
+          ${prev?`<div class="note-card-preview">${prev}</div>`:''}
+        </div>
+        <div class="note-card-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+};
+/* ============================================================
+   MODULE FICHES
+   ============================================================ */
+const Fiches = {
+  f: { kw:'', theme:'', sort:'alpha', panel:false },
+  go(screen, id) {
+    State.ficheDirty=false;
+    if(screen==='list') {
+      Nav.show('screen-fiches','slide-in-left');
+      Nav.setHeader('Fiches réflexes',true,Nav.ib('green','Nav.goHome()',Nav.SVG.home),true,true);
+      this.render();
+    } else if(screen==='new') {
+      ['fn-theme','fn-objection'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('fn-reponses-list').innerHTML='';
+      this.addReponse('fn');
+      Nav.show('screen-fiche-new','slide-in');
+      Nav.setHeader('Nouvelle fiche',true,Nav.pb('ghost',"Fiches.go('list')",'Annuler')+Nav.pb('green','Fiches.create()','Créer'),false,false);
+    } else if(screen==='edit') {
+      State.activeFicheId=id;
+      const fi=State.fiches.find(x=>x.id===id); if(!fi){this.go('list');return;}
+      document.getElementById('fe-theme').value=fi.theme||'';
+      document.getElementById('fe-objection').value=fi.objection||'';
+      const list=document.getElementById('fe-reponses-list'); list.innerHTML='';
+      (fi.reponses||[]).forEach(r=>this.addReponse('fe',r));
+      if(!fi.reponses?.length) this.addReponse('fe');
+      Nav.show('screen-fiche-edit','slide-in');
+      Nav.setHeader(fi.theme||'Fiche',true,Nav.ib('green',"Fiches.go('list')",Nav.SVG.back)+Nav.pb('green','Fiches.save()','Enregistrer'),false,false);
+    }
+  },
+  addReponse(p,val='') {
+    const list=document.getElementById(p+'-reponses-list');
+    const div=document.createElement('div'); div.className='rep-input-row';
+    div.innerHTML=`<textarea class="note-textarea short green" placeholder="Réponse…" oninput="State.markFicheDirty()">${U.esc(val)}</textarea>`+
+      `<button class="rep-del-btn" onclick="this.parentElement.remove();State.markFicheDirty()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+    list.appendChild(div);
+  },
+  _reps(p) { return Array.from(document.querySelectorAll(`#${p}-reponses-list textarea`)).map(t=>t.value.trim()).filter(Boolean); },
+  create() {
+    const theme=document.getElementById('fn-theme').value, obj=document.getElementById('fn-objection').value.trim();
+    if(!theme){const s=document.getElementById('fn-theme');s.style.borderColor='var(--danger)';s.focus();setTimeout(()=>s.style.borderColor='',1500);return;}
+    if(!obj)  {const s=document.getElementById('fn-objection');s.style.borderColor='var(--danger)';s.focus();setTimeout(()=>s.style.borderColor='',1500);return;}
+    State.fiches.push({id:U.uid('f'),theme,objection:obj,reponses:this._reps('fn'),createdAt:Date.now()});
+    State.saveFiches(); this.go('list'); UI.toast('Fiche créée ✓','💡');
+  },
+  save() {
+    const fi=State.fiches.find(x=>x.id===State.activeFicheId); if(!fi) return;
+    fi.theme=document.getElementById('fe-theme').value;
+    fi.objection=document.getElementById('fe-objection').value;
+    fi.reponses=this._reps('fe'); fi.updatedAt=Date.now();
+    State.ficheDirty=false; State.saveFiches(); this.go('list'); UI.toast('Fiche enregistrée ✓','💡');
+  },
+  confirmDelete() {
+    const fi=State.fiches.find(x=>x.id===State.activeFicheId);
+    UI.confirm('Supprimer cette fiche ?',fi?.objection||fi?.theme||'Fiche sans titre',()=>{
+      State.fiches=State.fiches.filter(x=>x.id!==State.activeFicheId);
+      State.activeFicheId=null; State.ficheDirty=false; State.saveFiches(); this.go('list'); UI.toast('Fiche supprimée','🗑️');
+    });
+  },
+  togglePanel() {
+    this.f.panel=!this.f.panel;
+    document.getElementById('fiches-panel').classList.toggle('open',this.f.panel);
+    const btn=document.getElementById('fiches-filter-btn');
+    btn.classList.toggle('open',this.f.panel); btn.classList.toggle('green',this.f.panel);
+  },
+  _chip(sel,btn) { document.querySelectorAll(sel+' .chip').forEach(c=>c.classList.remove('active','green')); btn.classList.add('active','green'); },
+  setTheme(b,v) { this.f.theme=v; this._chip('#ft-themes',b); this.render(); },
+  setSort(b,v)  { this.f.sort=v;  this._chip('#ft-fsorts',b); this.render(); },
+  onSearch()  { this.f.kw=document.getElementById('fiches-search-inp').value; document.getElementById('fiches-search-clear').classList.toggle('on',this.f.kw.length>0); this.render(); },
+  clearSearch(){ document.getElementById('fiches-search-inp').value=''; this.f.kw=''; document.getElementById('fiches-search-clear').classList.remove('on'); this.render(); },
+  resetFilters(){
+    this.f={...this.f,kw:'',theme:'',sort:'alpha'};
+    document.getElementById('fiches-search-inp').value='';
+    document.getElementById('fiches-search-clear').classList.remove('on');
+    ['#ft-themes','#ft-fsorts'].forEach(sel=>document.querySelectorAll(sel+' .chip').forEach((c,i)=>{c.classList.toggle('active',i===0);c.classList.toggle('green',i===0);}));
+    this.render();
+  },
+  render() {
+    const el=document.getElementById('fiches-content'), f=this.f, q=f.kw.toLowerCase().trim();
+    let m=State.fiches.filter(fi=>{
+      const kw=!q||(fi.theme||'').toLowerCase().includes(q)||(fi.objection||'').toLowerCase().includes(q)||(fi.reponses||[]).some(r=>r.toLowerCase().includes(q));
+      return kw&&(!f.theme||(fi.theme||'')===f.theme);
+    });
+    m.sort((a,b)=>{
+      if(f.sort==='theme')  return (a.theme||'').localeCompare(b.theme||'','fr',{sensitivity:'base'});
+      if(f.sort==='recent') return (b.createdAt||0)-(a.createdAt||0);
+      return (a.objection||'').localeCompare(b.objection||'','fr',{sensitivity:'base'});
+    });
+    const hf=q||f.theme||f.sort!=='alpha';
+    document.getElementById('fiches-reset').classList.toggle('on',hf);
+    document.getElementById('fiches-fdot').classList.toggle('on',hf);
+    const nf=State.fiches.length, nm=m.length;
+    document.getElementById('fiches-count').textContent=!nf?'':nm===nf?`${nf} fiche${nf>1?'s':''}`:`${nm} résultat${nm>1?'s':''} sur ${nf}`;
+    if(!nf){el.innerHTML=`<div class="list-empty"><div class="list-empty-emoji">💡</div><h3>Aucune fiche</h3><p>Appuyez sur <strong>+</strong> pour créer votre première fiche.</p></div>`;return;}
+    if(!nm){el.innerHTML=`<div class="list-empty"><div class="list-empty-emoji">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos critères ou réinitialisez les filtres.</p></div>`;return;}
+    el.innerHTML=`<div class="fiche-list">${m.map(fi=>{
+      const rc=(fi.reponses||[]).length;
+      const prev=rc?U.hl((fi.reponses[0]||'').substring(0,70)+((fi.reponses[0]||'').length>70?'…':''),q):'';
+      return `<div class="fiche-card" onclick="Fiches.go('edit','${fi.id}')">
+        <div class="fiche-card-ico">💡</div>
+        <div class="fiche-card-body">
+          <div class="fiche-card-theme">${U.esc(fi.theme||'')}</div>
+          <div class="fiche-card-title">${U.hl(fi.objection||'(sans objection)',q)}</div>
+          ${prev?`<div class="fiche-card-preview">${rc} réponse${rc>1?'s':''} · ${prev}</div>`:''}
+        </div>
+        <div class="fiche-card-chevron"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+};
+/* ============================================================
+   MODULE EXPORT
+   ============================================================ */
+const Export = {
+  section:'all', filter:'',
+  open()  { this.goStep(1); document.getElementById('modal-io').classList.add('open'); },
+  close() { document.getElementById('modal-io').classList.remove('open'); },
+  goStep(n, data) {
+    ['exp-step1','exp-step2','exp-step3'].forEach(id=>document.getElementById(id).style.display='none');
+    if(n===1) {
+      document.getElementById('exp-step1').style.display='';
+    } else if(n===2) {
+      const nn=State.notes.length, nf=State.fiches.length;
+      document.getElementById('exp-notes-count').textContent=`${nn} note${nn!==1?'s':''}`;
+      document.getElementById('exp-fiches-count').textContent=`${nf} fiche${nf!==1?'s':''}`;
+      document.getElementById('exp-step2').style.display='';
+    } else if(n===3) {
+      this.section=data||this.section; this.filter='';
+      const titles={notes:'FormaNotes',fiches:'Fiches réflexes',all:'Tout'};
+      document.getElementById('exp-step3-title').textContent='Exporter — '+titles[this.section];
+      const fs=document.getElementById('exp-filter-section'), fl=document.getElementById('exp-filter-label'), fc=document.getElementById('exp-filter-chips');
+      let items=[];
+      if(this.section==='fiches'){items=[...new Set(State.fiches.map(f=>f.theme||'').filter(Boolean))].sort();fl.textContent='Thème à exporter';}
+      else if(this.section==='notes'){items=[...new Set(State.notes.map(n=>n.type||'').filter(Boolean))].sort();fl.textContent='Type de formation';}
+      if(items.length>1){
+        fs.style.display='';
+        const isGreen=this.section==='fiches';
+        fc.innerHTML=['','...'+items].flat().map((t,i)=>t==='...'?null:`<button class="chip${i===0?(isGreen?' active green':' active'):''}" onclick="Export._sel(this,'${t.replace(/'/g,"\\'")}',${isGreen})">${t===''?'Tous':t}</button>`).filter(Boolean).join('');
+        fc.innerHTML=['', ...items].map((t,i)=>`<button class="chip${i===0?(this.section==='fiches'?' active green':' active'):''}" onclick="Export._sel(this,'${t.replace(/'/g,"\\'")}',${this.section==='fiches'})">${t===''?'Tous':t}</button>`).join('');
+      } else { fs.style.display='none'; this.filter=items[0]||''; }
+      document.getElementById('exp-step3').style.display='';
+    }
+  },
+  _sel(btn,val,green) {
+    this.filter=val;
+    document.querySelectorAll('#exp-filter-chips .chip').forEach(c=>c.classList.remove('active','green'));
+    btn.classList.add('active'); if(green) btn.classList.add('green');
+  },
+  run(fmt) {
+    if(fmt==='json') this._json();
+    else if(this.section==='notes') this._pdfNotes();
+    else if(this.section==='fiches') this._pdfFiches(this.filter||'__ALL__');
+    else { this._pdfNotes(); setTimeout(()=>this._pdfFiches('__ALL__'),600); }
+  },
+  _json() {
+    let data, name;
+    if(this.section==='notes')  { data={notes:State.notes}; name='formanotes-notes.json'; }
+    else if(this.section==='fiches') {
+      const d=this.filter?State.fiches.filter(f=>f.theme===this.filter):State.fiches;
+      data={fiches:d}; name='formanotes-fiches'+(this.filter?'-'+U.slug(this.filter):'')+'.json';
+    } else { data={notes:State.notes,fiches:State.fiches,exportedAt:new Date().toISOString()}; name='formanotes-backup.json'; }
+    U.dl(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),name);
+    this.close();
+  },
+  importJSON(e) {
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try {
+        const data=JSON.parse(ev.target.result); let ni=0,nf=0;
+        if(Array.isArray(data.notes)){const ids=new Set(State.notes.map(n=>n.id));data.notes.forEach(n=>{if(!ids.has(n.id)){State.notes.push(n);ni++;}});if(ni)State.saveNotes();}
+        if(Array.isArray(data.fiches)){const ids=new Set(State.fiches.map(f=>f.id));data.fiches.forEach(f=>{if(!ids.has(f.id)){State.fiches.push(f);nf++;}});if(nf)State.saveFiches();}
+        this.close(); alert(`Import terminé.\n${ni} note${ni>1?'s':''} ajoutée${ni>1?'s':''}.\n${nf} fiche${nf>1?'s':''} ajoutée${nf>1?'s':''}.`);
+        e.target.value='';
+      } catch { alert('Fichier JSON invalide.'); }
+    };
+    reader.readAsText(file);
+  },
+  /* ---- PDF NOTES ---- */
+  _pdfNotes() {
+    const filterType=this.filter;
+    const items=filterType?State.notes.filter(n=>n.type===filterType):State.notes;
+    if(!items.length){alert('Aucune note à exporter.');return;}
+    if(typeof jspdf==='undefined'){alert('Librairie PDF non disponible.');return;}
+    const {jsPDF}=jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,H=297,ML=18,MR=18,CW=W-ML-MR;
+    const dateStr=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+    const C={dark:[26,35,51],blue:[74,127,193],muted:[100,116,139],text:[51,65,85],white:[255,255,255],light:[240,244,248]};
+    let page=1;
+    const footer=()=>{doc.setFontSize(7.5).setTextColor(...C.muted);doc.text('FormaNotes · '+dateStr,ML,H-8);doc.text('Page '+page,W-MR,H-8,{align:'right'});};
+    const checkY=(y,need)=>{if(y+need>H-18){footer();doc.addPage();page++;doc.setFillColor(...C.blue);doc.rect(0,0,W,10,'F');doc.setFontSize(7.5).setFont(undefined,'bold').setTextColor(...C.white).text('FORMANOTES'+(filterType?'  ·  '+filterType.toUpperCase():''),ML,7);return 18;}return y;};
+    const sorted=[...items].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    // Couverture
+    doc.setFillColor(...C.dark);doc.rect(0,0,W,H,'F');
+    doc.setFillColor(...C.blue);doc.rect(0,H*.6,W,4,'F');
+    doc.setTextColor(...C.white);doc.setFontSize(9).setFont(undefined,'normal');doc.text('FORMANOTES',ML,H*.42);
+    doc.setFontSize(22).setFont(undefined,'bold');
+    const tl=doc.splitTextToSize(filterType||'Toutes les notes',CW);
+    tl.forEach((l,i)=>doc.text(l,ML,H*.42+10+i*11));
+    doc.setFontSize(9).setTextColor(...C.blue).text(sorted.length+' note'+(sorted.length>1?'s':''),ML,H*.42+10+tl.length*11+9);
+    doc.setFontSize(8).setTextColor(180,200,220).text('Exporté le '+dateStr,ML,H-18);
+    // Sommaire
+    doc.addPage();page=2;let y=28;
+    doc.setFillColor(...C.blue);doc.rect(ML,y-5,3,10,'F');
+    doc.setFontSize(13).setFont(undefined,'bold').setTextColor(...C.dark);doc.text('Sommaire',ML+7,y+3);y+=18;
+    sorted.forEach((n,i)=>{
+      y=y+11>H-18?(footer(),doc.addPage(),page++,18):y;
+      doc.setFillColor(...C.light);doc.roundedRect(ML,y-5,CW,9,1.5,1.5,'F');
+      doc.setFontSize(8).setFont(undefined,'bold').setTextColor(...C.blue).text(String(i+1).padStart(2,'0'),ML+3,y+1.5);
+      doc.setFont(undefined,'normal').setTextColor(...C.text).text((n.formation||'(sans titre)').substring(0,80),ML+13,y+1.5);
+      if(n.date){doc.setFontSize(7).setTextColor(...C.muted).text(n.date.split('-').reverse().join('/'),W-MR,y+1.5,{align:'right'});}
+      y+=13;
+    });
+    footer();
+    // Pages notes
+    sorted.forEach((n,ni)=>{
+      doc.addPage();page++;
+      doc.setFillColor(...C.blue);doc.rect(0,0,W,12,'F');
+      doc.setFontSize(7.5).setFont(undefined,'bold').setTextColor(...C.white);
+      doc.text('NOTE '+(ni+1)+' / '+sorted.length+(n.type?'  ·  '+n.type.toUpperCase():''),ML,8);
+      if(n.date) doc.setFont(undefined,'normal').text(n.date.split('-').reverse().join('/'),W-MR,8,{align:'right'});
+      y=22;
+      doc.setFontSize(7).setFont(undefined,'bold').setTextColor(...C.muted).text('FORMATION',ML,y);y+=5;
+      doc.setFillColor(232,240,251);
+      const tl2=doc.splitTextToSize(n.formation||'(sans titre)',CW-6);
+      const th=tl2.length*6+8;
+      doc.roundedRect(ML,y,CW,th,2,2,'F');doc.setFillColor(...C.blue);doc.rect(ML,y,3,th,'F');
+      doc.setFontSize(11).setFont(undefined,'bold').setTextColor(...C.dark);
+      tl2.forEach((l,li)=>doc.text(l,ML+7,y+7+li*6));y+=th+10;
+      if(n.type){
+        doc.setFontSize(7.5).setFont(undefined,'bold').setTextColor(...C.white).setFillColor(...C.blue);
+        const bw=doc.getTextWidth(n.type)+10;doc.roundedRect(ML,y-5,bw,7,2,2,'F');doc.text(n.type,ML+5,y);y+=8;
+      }
+      const content=(n.blocks||[n.content||'']).join('\n');
+      if(content.trim()){
+        y+=2;doc.setFontSize(7).setFont(undefined,'bold').setTextColor(...C.muted).text('NOTES',ML,y);y+=5;
+        doc.splitTextToSize(content,CW).forEach(line=>{y=checkY(y,6);doc.setFontSize(9.5).setFont(undefined,'normal').setTextColor(...C.text).text(line,ML,y);y+=5.5;});
+      }
+      footer();
+    });
+    doc.save('formanotes'+(filterType?'-'+U.slug(filterType):'')+'.pdf');
+    this.close();
+  },
+  /* ---- PDF FICHES ---- */
+  _pdfFiches(theme) {
+    const allMode=theme==='__ALL__';
+    const items=allMode?State.fiches:State.fiches.filter(f=>f.theme===theme);
+    const label=allMode?'Toutes les fiches':theme;
+    if(!items.length){alert('Aucune fiche à exporter.');return;}
+    if(typeof jspdf==='undefined'){alert('Librairie PDF non disponible.');return;}
+    const {jsPDF}=jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,H=297,ML=18,MR=18,CW=W-ML-MR;
+    const dateStr=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+    const C={dark:[26,35,51],green:[91,158,138],muted:[100,116,139],text:[51,65,85],white:[255,255,255],light:[240,244,248]};
+    let page=1;
+    const footer=()=>{doc.setFontSize(7.5).setTextColor(...C.muted);doc.text('FormaNotes · '+label+' · '+dateStr,ML,H-8);doc.text('Page '+page,W-MR,H-8,{align:'right'});};
+    const checkY=(y,need)=>{if(y+need>H-18){doc.addPage();page++;doc.setFontSize(7.5).setTextColor(...C.muted);doc.text('FormaNotes · '+label+' · '+dateStr,ML,H-8);doc.text('Page '+page,W-MR,H-8,{align:'right'});return 18;}return y;};
+    // Couverture
+    doc.setFillColor(...C.dark);doc.rect(0,0,W,H,'F');
+    doc.setFillColor(...C.green);doc.rect(0,H*.6,W,4,'F');
+    doc.setTextColor(...C.white);doc.setFontSize(9).setFont(undefined,'normal').text('FICHES RÉFLEXES',ML,H*.45);
+    doc.setFontSize(28).setFont(undefined,'bold');
+    const tl=doc.splitTextToSize(label,CW);tl.forEach((l,i)=>doc.text(l,ML,H*.45+12+i*14));
+    doc.setFontSize(8.5).setFont(undefined,'normal').setTextColor(...C.green).text(items.length+' fiche'+(items.length>1?'s':''),ML,H*.45+12+tl.length*14+10);
+    doc.setTextColor(180,200,220).text('Exporté le '+dateStr,ML,H-18);
+    // Sommaire
+    doc.addPage();page=2;let y=28;
+    doc.setFillColor(...C.green);doc.rect(ML,y-5,3,10,'F');
+    doc.setFontSize(13).setFont(undefined,'bold').setTextColor(...C.dark).text('Sommaire',ML+7,y+3);y+=18;
+    items.forEach((fi,i)=>{
+      y=checkY(y,10);
+      doc.setFillColor(...C.light);doc.roundedRect(ML,y-5,CW,9,1.5,1.5,'F');
+      doc.setFontSize(8.5).setFont(undefined,'bold').setTextColor(...C.green).text(String(i+1).padStart(2,'0'),ML+3,y+1.5);
+      doc.setFont(undefined,'normal').setTextColor(...C.text).text((fi.objection||'(sans titre)').substring(0,90),ML+13,y+1.5);
+      const rc=(fi.reponses||[]).length;doc.setFontSize(7).setTextColor(...C.muted).text(rc+' rép.',W-MR,y+1.5,{align:'right'});
+      y+=13;
+    });
+    doc.setFontSize(7.5).setTextColor(...C.muted);doc.text('FormaNotes · '+label+' · '+dateStr,ML,H-8);doc.text('Page 2',W-MR,H-8,{align:'right'});
+    // Pages fiches
+    items.forEach((fi,fii)=>{
+      doc.addPage();page++;y=22;
+      doc.setFillColor(...C.green);doc.rect(0,0,W,14,'F');
+      doc.setFontSize(7.5).setFont(undefined,'bold').setTextColor(...C.white);
+      doc.text('FICHE '+(fii+1)+' / '+items.length+(fi.theme&&allMode?'  ·  '+fi.theme.toUpperCase():allMode?'':'  ·  '+theme.toUpperCase()),ML,9);
+      doc.setFont(undefined,'normal').text(dateStr,W-MR,9,{align:'right'});
+      y=26;
+      doc.setFontSize(7).setFont(undefined,'bold').setTextColor(...C.muted).text('OBJECTION / QUESTION POSÉE',ML,y);y+=5;
+      doc.setFillColor(230,244,240);
+      const ol=doc.splitTextToSize('« '+(fi.objection||'')+' »',CW-8);
+      const oh=ol.length*6+8;doc.roundedRect(ML,y,CW,oh,2,2,'F');doc.setFillColor(...C.green);doc.rect(ML,y,3,oh,'F');
+      doc.setFontSize(10).setFont(undefined,'bold').setTextColor(...C.dark);ol.forEach((l,i)=>doc.text(l,ML+7,y+7+i*6));y+=oh+10;
+      const reps=fi.reponses||[];
+      if(reps.length){
+        doc.setFontSize(7).setFont(undefined,'bold').setTextColor(...C.muted).text('RÉPONSES',ML,y);y+=6;
+        reps.forEach((r,ri)=>{
+          const rl=doc.splitTextToSize(r||'',CW-16),rh=rl.length*5.5+10;
+          y=checkY(y,rh+4);
+          doc.setFillColor(...C.light);doc.roundedRect(ML,y,CW,rh,2,2,'F');
+          doc.setFillColor(...C.green);doc.circle(ML+6,y+rh/2,4,'F');
+          doc.setFontSize(8).setFont(undefined,'bold').setTextColor(...C.white).text(String(ri+1),ML+6,y+rh/2+2.5,{align:'center'});
+          doc.setFontSize(9).setFont(undefined,'normal').setTextColor(...C.text);rl.forEach((l,li)=>doc.text(l,ML+14,y+7+li*5.5));
+          y+=rh+5;
+        });
+      } else { doc.setFontSize(9).setFont(undefined,'italic').setTextColor(...C.muted).text('Aucune réponse enregistrée.',ML,y); }
+      footer();
+    });
+    doc.save('fiches-'+(allMode?'toutes':U.slug(theme))+'.pdf');
+    this.close();
+  }
+};
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+const DarkMode = {
+  MOON:`<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
+  SUN:`<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`,
+  dark: localStorage.getItem('formanotes-dark')==='1',
+  apply() { document.querySelector('.phone').classList.toggle('dark',this.dark); document.getElementById('dark-icon').innerHTML=this.dark?this.SUN:this.MOON; },
+  toggle(){ this.dark=!this.dark; DB.save(DB.KEYS.dark,this.dark?'1':'0'); this.apply(); }
+};
+DarkMode.apply();
+/* ============================================================
+   CLAVIER
+   ============================================================ */
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    e.preventDefault();
+    if(State.module==='notes') Notes.save();
+    else if(State.module==='fiches') Fiches.save();
+  }
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
+window.addEventListener('beforeunload',e=>{if(State.dirty||State.ficheDirty){e.preventDefault();e.returnValue='';}});
+/* ---- INIT ---- */
+Nav.setHeader('FormaNotes',false,'',false,false);
+</script>
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+'use strict';
+/* ============================================================
+   MODULE GOOGLE DRIVE
+   ============================================================ */
+const GDrive = {
+  CLIENT_ID: '708909552427-lbvud7ua77sp1cahjv99seagu6f6o4ff.apps.googleusercontent.com',
+  SCOPE: 'https://www.googleapis.com/auth/drive.file',
+  FOLDER_NAME: 'FormaNotes',
+  _token: null,
+  _user:  null,
+  _folderId: null,
+
+  /* ---- UI ---- */
+  openModal() {
+    const nn=State.notes.length, nf=State.fiches.length;
+    document.getElementById('drive-notes-count').textContent  = `${nn} note${nn!==1?'s':''}`;
+    document.getElementById('drive-fiches-count').textContent = `${nf} fiche${nf!==1?'s':''}`;
+    if(this._token) { this._showStep('choice'); }
+    else            { this._showStep('connect'); }
+    document.getElementById('modal-drive').classList.add('open');
+  },
+  closeModal() { document.getElementById('modal-drive').classList.remove('open'); },
+  _showStep(s) {
+    document.getElementById('drive-step-connect').style.display = s==='connect'?'':'none';
+    document.getElementById('drive-step-choice').style.display  = s==='choice' ?'':'none';
+    document.getElementById('drive-saving').style.display = 'none';
+  },
+  _updateHomeBtn() {
+    const dot = document.getElementById('drive-status-dot');
+    const lbl = document.getElementById('drive-status-label');
+    if(this._token && this._user) {
+      dot.classList.add('connected');
+      lbl.textContent = this._user.name || 'Connecté';
+    } else {
+      dot.classList.remove('connected');
+      lbl.textContent = 'Non connecté';
+    }
+  },
+
+  /* ---- AUTH ---- */
+  signIn() {
+    if(typeof google === 'undefined') {
+      alert('Impossible de charger Google Sign-In. Vérifiez votre connexion internet.');
+      return;
+    }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: this.CLIENT_ID,
+      scope: this.SCOPE,
+      callback: (resp) => {
+        if(resp.error) { alert('Erreur de connexion : ' + resp.error); return; }
+        this._token = resp.access_token;
+        this._folderId = null;
+        // Récupérer infos utilisateur
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + this._token }
+        })
+        .then(r=>r.json())
+        .then(info=>{
+          this._user = { name: info.name, email: info.email, picture: info.picture };
+          // Afficher infos dans la modale
+          document.getElementById('drive-user-name').textContent  = info.name  || '';
+          document.getElementById('drive-user-email').textContent = info.email || '';
+          const av = document.getElementById('drive-avatar');
+          if(info.picture){ av.src=info.picture; av.style.display=''; }
+          this._updateHomeBtn();
+          this._showStep('choice');
+        })
+        .catch(()=>{
+          this._user = { name:'Compte Google', email:'' };
+          document.getElementById('drive-user-name').textContent  = 'Compte Google';
+          document.getElementById('drive-user-email').textContent = '';
+          this._updateHomeBtn();
+          this._showStep('choice');
+        });
+      }
+    });
+    client.requestAccessToken();
+  },
+
+  signOut() {
+    if(this._token && typeof google !== 'undefined') {
+      google.accounts.oauth2.revoke(this._token);
+    }
+    this._token = null; this._user = null; this._folderId = null;
+    this._updateHomeBtn();
+    this._showStep('connect');
+    UI.toast('Déconnecté de Google Drive', '👋');
+  },
+
+  /* ---- DRIVE API ---- */
+  async _getOrCreateFolder() {
+    if(this._folderId) return this._folderId;
+    // Chercher dossier existant
+    const q = encodeURIComponent(`name='${this.FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`, {
+      headers: { Authorization: 'Bearer ' + this._token }
+    });
+    const data = await res.json();
+    if(data.files && data.files.length > 0) {
+      this._folderId = data.files[0].id;
+      return this._folderId;
+    }
+    // Créer le dossier
+    const create = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + this._token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: this.FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
+    });
+    const folder = await create.json();
+    this._folderId = folder.id;
+    return this._folderId;
+  },
+
+  async _uploadFile(name, content, folderId) {
+    // Chercher si fichier existant (pour update)
+    const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
+    const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, {
+      headers: { Authorization: 'Bearer ' + this._token }
+    });
+    const found = await search.json();
+    const blob = new Blob([content], { type: 'application/json' });
+    const meta = { name, parents: [folderId] };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+    form.append('file', blob);
+
+    if(found.files && found.files.length > 0) {
+      // PATCH (update)
+      const form2 = new FormData();
+      form2.append('metadata', new Blob([JSON.stringify({name})], {type:'application/json'}));
+      form2.append('file', blob);
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${found.files[0].id}?uploadType=multipart`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + this._token },
+        body: form2
+      });
+    } else {
+      // POST (create)
+      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + this._token },
+        body: form
+      });
+    }
+  },
+
+  /* ---- SAUVEGARDE ---- */
+  async save(section) {
+    if(!this._token) { this.signIn(); return; }
+    document.getElementById('drive-saving').style.display = '';
+    document.querySelectorAll('#drive-step-choice .modal-btn').forEach(b=>b.disabled=true);
+    try {
+      const folderId = await this._getOrCreateFolder();
+      const now = new Date().toISOString().split('T')[0];
+      if(section === 'notes' || section === 'all') {
+        const data = section==='all'
+          ? { notes:State.notes, fiches:State.fiches, exportedAt:new Date().toISOString() }
+          : { notes:State.notes, exportedAt:new Date().toISOString() };
+        const fname = section==='all' ? `formanotes-backup-${now}.json` : `formanotes-notes-${now}.json`;
+        await this._uploadFile(fname, JSON.stringify(data, null, 2), folderId);
+      }
+      if(section === 'fiches') {
+        const data = { fiches:State.fiches, exportedAt:new Date().toISOString() };
+        await this._uploadFile(`formanotes-fiches-${now}.json`, JSON.stringify(data, null, 2), folderId);
+      }
+      this.closeModal();
+      const labels = { notes:'Notes sauvegardées', fiches:'Fiches sauvegardées', all:'Sauvegarde complète' };
+      UI.toast(labels[section]+' sur Drive ✓', '☁️');
+    } catch(e) {
+      alert('Erreur lors de la sauvegarde : ' + (e.message||e));
+    } finally {
+      document.getElementById('drive-saving').style.display = 'none';
+      document.querySelectorAll('#drive-step-choice .modal-btn').forEach(b=>b.disabled=false);
+    }
+  }
+};
+</script>
+</body>
+</html>
