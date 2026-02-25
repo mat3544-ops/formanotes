@@ -244,6 +244,10 @@ input[type="date"].field-inp { cursor:pointer; color-scheme:light; }
 .drive-signin-btn:hover { box-shadow:0 2px 8px rgba(0,0,0,.15); }
 .drive-signin-btn:active { transform:scale(.97); }
 .dark .drive-signin-btn { background:#2d3748; border-color:#4a5568; color:var(--text); }
+.drive-sync-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:var(--accent); color:white; border:none; border-radius:var(--r-lg); padding:13px 16px; font-family:'Raleway',sans-serif; font-size:.8rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow-blue); transition:opacity .15s,transform .12s; }
+.drive-sync-btn:hover   { opacity:.92; }
+.drive-sync-btn:active  { transform:scale(.97); }
+.drive-sync-btn:disabled { opacity:.55; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -616,7 +620,8 @@ input[type="date"].field-inp { cursor:pointer; color-scheme:light; }
   <!-- MODALE GOOGLE DRIVE -->
   <div class="modal-overlay" id="modal-drive" onclick="if(event.target===this)GDrive.closeModal()">
     <div class="modal-box">
-      <!-- Étape 1 : connexion -->
+
+      <!-- Étape : connexion -->
       <div id="drive-step-connect">
         <div class="modal-title">
           <span style="display:flex;align-items:center;gap:8px">
@@ -625,66 +630,64 @@ input[type="date"].field-inp { cursor:pointer; color-scheme:light; }
           </span>
           <button class="icon-btn" onclick="GDrive.closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
-        <div style="text-align:center;padding:16px 0 20px;display:flex;flex-direction:column;align-items:center;gap:12px">
-          <div style="font-size:2.4rem">☁️</div>
+        <div style="text-align:center;padding:20px 0 24px;display:flex;flex-direction:column;align-items:center;gap:12px">
+          <div style="font-size:2.6rem">☁️</div>
           <div style="font-size:.85rem;font-weight:700;color:var(--text)">Connectez votre compte Google</div>
-          <div style="font-size:.73rem;color:var(--text-muted);line-height:1.55;max-width:260px">Vos données seront sauvegardées dans un dossier <strong>FormaNotes</strong> sur votre Drive.</div>
+          <div style="font-size:.73rem;color:var(--text-muted);line-height:1.55;max-width:260px">Vos données seront synchronisées dans un dossier <strong>FormaNotes</strong> sur votre Drive.</div>
         </div>
         <button class="drive-signin-btn" onclick="GDrive.signIn()">
           <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
           Se connecter avec Google
         </button>
       </div>
-      <!-- Étape 2 : choix section -->
-      <div id="drive-step-choice" style="display:none">
+
+      <!-- Étape : sync -->
+      <div id="drive-step-sync" style="display:none">
         <div class="modal-title">
           <span style="display:flex;align-items:center;gap:8px">
             <svg viewBox="0 0 87.3 78" width="18" height="18"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z" fill="#ea4335"/><path d="M43.65 25L57.4 0H29.9z" fill="#00832d"/><path d="M59.8 53H87.3c0-1.55-.4-3.1-1.2-4.5L60.8 3.3c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25z" fill="#2684fc"/><path d="M27.5 53L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2L59.8 53z" fill="#ffba00"/></svg>
-            Sauvegarder sur Drive
+            Google Drive
           </span>
           <button class="icon-btn" onclick="GDrive.closeModal()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
-        <div id="drive-user-info" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:16px;border:1px solid var(--border)">
+        <!-- Compte connecté -->
+        <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:var(--r-lg);padding:10px 12px;margin-bottom:14px;border:1px solid var(--border)">
           <img id="drive-avatar" src="" width="28" height="28" style="border-radius:50%;display:none">
           <div style="flex:1;min-width:0">
             <div id="drive-user-name" style="font-size:.75rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
             <div id="drive-user-email" style="font-size:.62rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
           </div>
-          <button onclick="GDrive.signOut()" style="background:none;border:none;font-size:.62rem;font-weight:700;color:var(--danger);cursor:pointer;flex-shrink:0">Déconnexion</button>
+          <button onclick="GDrive.signOut()" style="background:none;border:none;font-size:.62rem;font-weight:700;color:var(--danger);cursor:pointer;flex-shrink:0;padding:4px 6px">Déconnexion</button>
         </div>
-        <div class="modal-section">
-          <div class="modal-section-lbl">Que sauvegarder ?</div>
-          <div class="modal-row" style="flex-direction:column;gap:8px">
-            <button class="modal-btn blue" onclick="GDrive.save('notes')">
-              <svg viewBox="0 0 24 24" style="stroke:var(--accent);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              <div class="modal-btn-label">
-                <div class="modal-btn-title">FormaNotes</div>
-                <div class="modal-btn-sub" id="drive-notes-count"></div>
-              </div>
-            </button>
-            <button class="modal-btn green" onclick="GDrive.save('fiches')">
-              <svg viewBox="0 0 24 24" style="stroke:var(--accent2);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              <div class="modal-btn-label">
-                <div class="modal-btn-title">Fiches réflexes</div>
-                <div class="modal-btn-sub" id="drive-fiches-count"></div>
-              </div>
-            </button>
-            <button class="modal-btn" onclick="GDrive.save('all')" style="border-color:var(--neutral-light)">
-              <svg viewBox="0 0 24 24" style="stroke:var(--neutral);fill:none;stroke-width:2.2;width:18px;height:18px;flex-shrink:0"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              <div class="modal-btn-label">
-                <div class="modal-btn-title">Tout sauvegarder</div>
-                <div class="modal-btn-sub">Notes + Fiches en un fichier</div>
-              </div>
-            </button>
+        <!-- Résumé données -->
+        <div style="background:var(--surface2);border-radius:var(--r-lg);padding:12px;margin-bottom:16px;border:1px solid var(--border);display:flex;justify-content:space-around;align-items:center">
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--accent)" id="sync-notes-count">0</div>
+            <div style="font-size:.6rem;color:var(--text-muted);font-weight:600;margin-top:2px">Notes</div>
+          </div>
+          <div style="width:1px;background:var(--border);height:32px"></div>
+          <div style="text-align:center">
+            <div style="font-size:1.4rem;font-weight:800;color:var(--accent2)" id="sync-fiches-count">0</div>
+            <div style="font-size:.6rem;color:var(--text-muted);font-weight:600;margin-top:2px">Fiches</div>
+          </div>
+          <div style="width:1px;background:var(--border);height:32px"></div>
+          <div style="text-align:center">
+            <div style="font-size:.6rem;color:var(--text-muted);font-weight:600">Dernier sync</div>
+            <div style="font-size:.65rem;color:var(--text);font-weight:700;margin-top:2px" id="sync-last-date">—</div>
           </div>
         </div>
-        <div id="drive-saving" style="display:none;text-align:center;padding:16px 0;font-size:.78rem;color:var(--text-muted);font-weight:600">
-          <div style="margin-bottom:8px">⏳ Sauvegarde en cours…</div>
+        <!-- Bouton unique synchroniser -->
+        <button class="drive-sync-btn" id="drive-sync-btn" onclick="GDrive.sync()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          <span id="drive-sync-label">Synchroniser maintenant</span>
+        </button>
+        <div style="text-align:center;margin-top:10px;font-size:.6rem;color:var(--text-muted)">
+          Fichier : <code style="font-size:.6rem">formanotes-backup.json</code> dans le dossier FormaNotes
         </div>
       </div>
+
     </div>
   </div>
-
 </div><!-- /phone -->
 <script>
 'use strict';
@@ -1244,27 +1247,33 @@ Nav.setHeader('FormaNotes',false,'',false,false);
    MODULE GOOGLE DRIVE
    ============================================================ */
 const GDrive = {
-  CLIENT_ID: '708909552427-lbvud7ua77sp1cahjv99seagu6f6o4ff.apps.googleusercontent.com',
-  SCOPE: 'https://www.googleapis.com/auth/drive.file',
+  CLIENT_ID:   '708909552427-lbvud7ua77sp1cahjv99seagu6f6o4ff.apps.googleusercontent.com',
+  SCOPE:       'https://www.googleapis.com/auth/drive.file',
   FOLDER_NAME: 'FormaNotes',
-  _token: null,
-  _user:  null,
+  BACKUP_FILE: 'formanotes-backup.json',
+  LAST_SYNC_KEY: 'formanotes-last-sync',
+  _token:    null,
+  _user:     null,
   _folderId: null,
 
-  /* ---- UI ---- */
+  /* ---------- UI ---------- */
   openModal() {
-    const nn=State.notes.length, nf=State.fiches.length;
-    document.getElementById('drive-notes-count').textContent  = `${nn} note${nn!==1?'s':''}`;
-    document.getElementById('drive-fiches-count').textContent = `${nf} fiche${nf!==1?'s':''}`;
-    if(this._token) { this._showStep('choice'); }
-    else            { this._showStep('connect'); }
+    document.getElementById('sync-notes-count').textContent  = State.notes.length;
+    document.getElementById('sync-fiches-count').textContent = State.fiches.length;
+    const ls = localStorage.getItem(this.LAST_SYNC_KEY);
+    document.getElementById('sync-last-date').textContent = ls ? this._fmtDate(ls) : '—';
+    this._showStep(this._token ? 'sync' : 'connect');
     document.getElementById('modal-drive').classList.add('open');
   },
   closeModal() { document.getElementById('modal-drive').classList.remove('open'); },
   _showStep(s) {
-    document.getElementById('drive-step-connect').style.display = s==='connect'?'':'none';
-    document.getElementById('drive-step-choice').style.display  = s==='choice' ?'':'none';
-    document.getElementById('drive-saving').style.display = 'none';
+    document.getElementById('drive-step-connect').style.display = s==='connect' ? '' : 'none';
+    document.getElementById('drive-step-sync').style.display    = s==='sync'    ? '' : 'none';
+  },
+  _fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})
+      + ' ' + d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   },
   _updateHomeBtn() {
     const dot = document.getElementById('drive-status-dot');
@@ -1278,7 +1287,7 @@ const GDrive = {
     }
   },
 
-  /* ---- AUTH ---- */
+  /* ---------- AUTH ---------- */
   signIn() {
     if(typeof google === 'undefined') {
       alert('Impossible de charger Google Sign-In. Vérifiez votre connexion internet.');
@@ -1287,131 +1296,103 @@ const GDrive = {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: this.CLIENT_ID,
       scope: this.SCOPE,
-      callback: (resp) => {
+      callback: async (resp) => {
         if(resp.error) { alert('Erreur de connexion : ' + resp.error); return; }
         this._token = resp.access_token;
         this._folderId = null;
-        // Récupérer infos utilisateur
-        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: 'Bearer ' + this._token }
-        })
-        .then(r=>r.json())
-        .then(info=>{
+        try {
+          const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+            { headers:{ Authorization:'Bearer '+this._token } }).then(r=>r.json());
           this._user = { name: info.name, email: info.email, picture: info.picture };
-          // Afficher infos dans la modale
-          document.getElementById('drive-user-name').textContent  = info.name  || '';
-          document.getElementById('drive-user-email').textContent = info.email || '';
-          const av = document.getElementById('drive-avatar');
-          if(info.picture){ av.src=info.picture; av.style.display=''; }
-          this._updateHomeBtn();
-          this._showStep('choice');
-        })
-        .catch(()=>{
+        } catch(_) {
           this._user = { name:'Compte Google', email:'' };
-          document.getElementById('drive-user-name').textContent  = 'Compte Google';
-          document.getElementById('drive-user-email').textContent = '';
-          this._updateHomeBtn();
-          this._showStep('choice');
-        });
+        }
+        // Remplir infos modale
+        document.getElementById('drive-user-name').textContent  = this._user.name  || '';
+        document.getElementById('drive-user-email').textContent = this._user.email || '';
+        const av = document.getElementById('drive-avatar');
+        if(this._user.picture){ av.src=this._user.picture; av.style.display=''; }
+        else { av.style.display='none'; }
+        this._updateHomeBtn();
+        this._showStep('sync');
       }
     });
     client.requestAccessToken();
   },
 
   signOut() {
-    if(this._token && typeof google !== 'undefined') {
+    if(this._token && typeof google !== 'undefined')
       google.accounts.oauth2.revoke(this._token);
-    }
     this._token = null; this._user = null; this._folderId = null;
+    document.getElementById('drive-avatar').style.display = 'none';
     this._updateHomeBtn();
     this._showStep('connect');
     UI.toast('Déconnecté de Google Drive', '👋');
   },
 
-  /* ---- DRIVE API ---- */
+  /* ---------- DRIVE API ---------- */
   async _getOrCreateFolder() {
     if(this._folderId) return this._folderId;
-    // Chercher dossier existant
     const q = encodeURIComponent(`name='${this.FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`, {
-      headers: { Authorization: 'Bearer ' + this._token }
-    });
-    const data = await res.json();
-    if(data.files && data.files.length > 0) {
-      this._folderId = data.files[0].id;
-      return this._folderId;
-    }
-    // Créer le dossier
-    const create = await fetch('https://www.googleapis.com/drive/v3/files', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + this._token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: this.FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' })
-    });
-    const folder = await create.json();
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+      { headers:{ Authorization:'Bearer '+this._token } }).then(r=>r.json());
+    if(res.files && res.files.length > 0) { this._folderId=res.files[0].id; return this._folderId; }
+    const folder = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method:'POST',
+      headers:{ Authorization:'Bearer '+this._token, 'Content-Type':'application/json' },
+      body: JSON.stringify({ name:this.FOLDER_NAME, mimeType:'application/vnd.google-apps.folder' })
+    }).then(r=>r.json());
     this._folderId = folder.id;
     return this._folderId;
   },
 
-  async _uploadFile(name, content, folderId) {
-    // Chercher si fichier existant (pour update)
+  async _upsertFile(name, content, folderId) {
     const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
-    const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`, {
-      headers: { Authorization: 'Bearer ' + this._token }
-    });
-    const found = await search.json();
-    const blob = new Blob([content], { type: 'application/json' });
-    const meta = { name, parents: [folderId] };
+    const found = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+      { headers:{ Authorization:'Bearer '+this._token } }).then(r=>r.json());
+    const blob = new Blob([content], { type:'application/json' });
     const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
-    form.append('file', blob);
-
     if(found.files && found.files.length > 0) {
-      // PATCH (update)
-      const form2 = new FormData();
-      form2.append('metadata', new Blob([JSON.stringify({name})], {type:'application/json'}));
-      form2.append('file', blob);
+      // Mise à jour
+      form.append('metadata', new Blob([JSON.stringify({name})], {type:'application/json'}));
+      form.append('file', blob);
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${found.files[0].id}?uploadType=multipart`, {
-        method: 'PATCH',
-        headers: { Authorization: 'Bearer ' + this._token },
-        body: form2
-      });
+        method:'PATCH', headers:{ Authorization:'Bearer '+this._token }, body:form });
     } else {
-      // POST (create)
+      // Création
+      form.append('metadata', new Blob([JSON.stringify({name, parents:[folderId]})], {type:'application/json'}));
+      form.append('file', blob);
       await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + this._token },
-        body: form
-      });
+        method:'POST', headers:{ Authorization:'Bearer '+this._token }, body:form });
     }
   },
 
-  /* ---- SAUVEGARDE ---- */
-  async save(section) {
+  /* ---------- SYNC ---------- */
+  async sync() {
     if(!this._token) { this.signIn(); return; }
-    document.getElementById('drive-saving').style.display = '';
-    document.querySelectorAll('#drive-step-choice .modal-btn').forEach(b=>b.disabled=true);
+    const btn   = document.getElementById('drive-sync-btn');
+    const label = document.getElementById('drive-sync-label');
+    btn.disabled = true;
+    label.textContent = 'Synchronisation…';
     try {
       const folderId = await this._getOrCreateFolder();
-      const now = new Date().toISOString().split('T')[0];
-      if(section === 'notes' || section === 'all') {
-        const data = section==='all'
-          ? { notes:State.notes, fiches:State.fiches, exportedAt:new Date().toISOString() }
-          : { notes:State.notes, exportedAt:new Date().toISOString() };
-        const fname = section==='all' ? `formanotes-backup-${now}.json` : `formanotes-notes-${now}.json`;
-        await this._uploadFile(fname, JSON.stringify(data, null, 2), folderId);
-      }
-      if(section === 'fiches') {
-        const data = { fiches:State.fiches, exportedAt:new Date().toISOString() };
-        await this._uploadFile(`formanotes-fiches-${now}.json`, JSON.stringify(data, null, 2), folderId);
-      }
+      const payload  = JSON.stringify({
+        notes:   State.notes,
+        fiches:  State.fiches,
+        syncedAt: new Date().toISOString(),
+        version:  2
+      }, null, 2);
+      await this._upsertFile(this.BACKUP_FILE, payload, folderId);
+      const now = new Date().toISOString();
+      localStorage.setItem(this.LAST_SYNC_KEY, now);
+      document.getElementById('sync-last-date').textContent = this._fmtDate(now);
       this.closeModal();
-      const labels = { notes:'Notes sauvegardées', fiches:'Fiches sauvegardées', all:'Sauvegarde complète' };
-      UI.toast(labels[section]+' sur Drive ✓', '☁️');
+      UI.toast('Synchronisé avec Google Drive', '☁️');
     } catch(e) {
-      alert('Erreur lors de la sauvegarde : ' + (e.message||e));
+      alert('Erreur de synchronisation : ' + (e.message||e));
     } finally {
-      document.getElementById('drive-saving').style.display = 'none';
-      document.querySelectorAll('#drive-step-choice .modal-btn').forEach(b=>b.disabled=false);
+      btn.disabled = false;
+      label.textContent = 'Synchroniser maintenant';
     }
   }
 };
