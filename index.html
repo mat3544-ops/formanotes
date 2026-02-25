@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FormaNotes">
+<meta name="theme-color" content="#4a7fc1">
+<meta name="application-name" content="FormaNotes">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkZvcm1hTm90ZXMiLCAic2hvcnRfbmFtZSI6ICJGb3JtYU5vdGVzIiwgImRlc2NyaXB0aW9uIjogIkdlc3Rpb24gZGVzIG5vdGVzIGRlIGZvcm1hdGlvbiBldCBmaWNoZXMgclx1MDBlOWZsZXhlcyIsICJzdGFydF91cmwiOiAiL2Zvcm1hbm90ZXMvIiwgInNjb3BlIjogIi9mb3JtYW5vdGVzLyIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjBmNGY4IiwgInRoZW1lX2NvbG9yIjogIiM0YTdmYzEiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqTTRJaUJtYVd4c1BTSWpOR0UzWm1NeElpOCtQSEpsWTNRZ2VEMGlNellpSUhrOUlqUTRJaUIzYVdSMGFEMGlNVEl3SWlCb1pXbG5hSFE5SWpFeUlpQnllRDBpTmlJZ1ptbHNiRDBpZDJocGRHVWlJRzl3WVdOcGRIazlJaTQ1SWk4K1BISmxZM1FnZUQwaU16WWlJSGs5SWpjMklpQjNhV1IwYUQwaU9UWWlJR2hsYVdkb2REMGlNVElpSUhKNFBTSTJJaUJtYVd4c1BTSjNhR2wwWlNJZ2IzQmhZMmwwZVQwaUxqY2lMejQ4Y21WamRDQjRQU0l6TmlJZ2VUMGlNVEEwSWlCM2FXUjBhRDBpTVRBNElpQm9aV2xuYUhROUlqRXlJaUJ5ZUQwaU5pSWdabWxzYkQwaWQyaHBkR1VpSUc5d1lXTnBkSGs5SWk0M0lpOCtQSEpsWTNRZ2VEMGlNellpSUhrOUlqRXpNaUlnZDJsa2RHZzlJamN5SWlCb1pXbG5hSFE5SWpFeUlpQnllRDBpTmlJZ1ptbHNiRDBpZDJocGRHVWlJRzl3WVdOcGRIazlJaTQxSWk4K1BDOXpkbWMrIiwgInNpemVzIjogIjE5MngxOTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn0sIHsic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIWnBaWGRDYjNnOUlqQWdNQ0ExTVRJZ05URXlJajQ4Y21WamRDQjNhV1IwYUQwaU5URXlJaUJvWldsbmFIUTlJalV4TWlJZ2NuZzlJakV3TUNJZ1ptbHNiRDBpSXpSaE4yWmpNU0l2UGp4eVpXTjBJSGc5SWprMklpQjVQU0l4TWpnaUlIZHBaSFJvUFNJek1qQWlJR2hsYVdkb2REMGlNeklpSUhKNFBTSXhOaUlnWm1sc2JEMGlkMmhwZEdVaUlHOXdZV05wZEhrOUlpNDVJaTgrUEhKbFkzUWdlRDBpT1RZaUlIazlJakl3TkNJZ2QybGtkR2c5SWpJMU5pSWdhR1ZwWjJoMFBTSXpNaUlnY25nOUlqRTJJaUJtYVd4c1BTSjNhR2wwWlNJZ2IzQmhZMmwwZVQwaUxqY2lMejQ4Y21WamRDQjRQU0k1TmlJZ2VUMGlNamd3SWlCM2FXUjBhRDBpTWpnNElpQm9aV2xuYUhROUlqTXlJaUJ5ZUQwaU1UWWlJR1pwYkd3OUluZG9hWFJsSWlCdmNHRmphWFI1UFNJdU55SXZQanh5WldOMElIZzlJamsySWlCNVBTSXpOVFlpSUhkcFpIUm9QU0l4T1RJaUlHaGxhV2RvZEQwaU16SWlJSEo0UFNJeE5pSWdabWxzYkQwaWQyaHBkR1VpSUc5d1lXTnBkSGs5SWk0MUlpOCtQQzl6ZG1jKyIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSJ9XX0=">
 <title>FormaNotes</title>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1478,6 +1485,45 @@ const GDrive = {
     }
   }
 };
+</script>
+<script>
+// Enregistrement Service Worker inline
+if('serviceWorker' in navigator) {
+  const swBlob = new Blob([`
+// FormaNotes Service Worker
+const CACHE = 'formanotes-v1';
+const ASSETS = ['/formanotes/'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match('/formanotes/')))
+  );
+});
+`], {type:'text/javascript'});
+  const swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl, {scope: '/formanotes/'})
+    .then(reg => console.log('SW enregistré:', reg.scope))
+    .catch(err => {
+      // Fallback: essayer sans scope si blob SW échoue
+      navigator.serviceWorker.register(swUrl)
+        .then(reg => console.log('SW enregistré (fallback):', reg.scope))
+        .catch(e => console.warn('SW non disponible:', e));
+    });
+}
 </script>
 </body>
 </html>
