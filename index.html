@@ -1255,6 +1255,7 @@ const GDrive = {
   _token:    null,
   _user:     null,
   _folderId: null,
+  _fileId:   null,
 
   /* ---------- UI ---------- */
   openModal() {
@@ -1300,6 +1301,7 @@ const GDrive = {
         if(resp.error) { alert('Erreur de connexion : ' + resp.error); return; }
         this._token = resp.access_token;
         this._folderId = null;
+        this._fileId   = null;
         try {
           const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
             { headers:{ Authorization:'Bearer '+this._token } }).then(r=>r.json());
@@ -1307,7 +1309,6 @@ const GDrive = {
         } catch(_) {
           this._user = { name:'Compte Google', email:'' };
         }
-        // Remplir infos modale
         document.getElementById('drive-user-name').textContent  = this._user.name  || '';
         document.getElementById('drive-user-email').textContent = this._user.email || '';
         const av = document.getElementById('drive-avatar');
@@ -1323,7 +1324,7 @@ const GDrive = {
   signOut() {
     if(this._token && typeof google !== 'undefined')
       google.accounts.oauth2.revoke(this._token);
-    this._token = null; this._user = null; this._folderId = null;
+    this._token = null; this._user = null; this._folderId = null; this._fileId = null;
     document.getElementById('drive-avatar').style.display = 'none';
     this._updateHomeBtn();
     this._showStep('connect');
@@ -1346,28 +1347,64 @@ const GDrive = {
     return this._folderId;
   },
 
-  async _upsertFile(name, content, folderId) {
-    const q = encodeURIComponent(`name='${name}' and '${folderId}' in parents and trashed=false`);
-    const found = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+  async _findBackupFile(folderId) {
+    if(this._fileId) return this._fileId;
+    const q = encodeURIComponent(`name='${this.BACKUP_FILE}' and '${folderId}' in parents and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
       { headers:{ Authorization:'Bearer '+this._token } }).then(r=>r.json());
-    const blob = new Blob([content], { type:'application/json' });
+    if(res.files && res.files.length > 0) { this._fileId=res.files[0].id; return this._fileId; }
+    return null;
+  },
+
+  async _downloadBackup(fileId) {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers:{ Authorization:'Bearer '+this._token } });
+    if(!res.ok) return null;
+    try { return await res.json(); } catch(_) { return null; }
+  },
+
+  async _uploadBackup(payload, folderId, fileId) {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
     const form = new FormData();
-    if(found.files && found.files.length > 0) {
-      // Mise à jour
-      form.append('metadata', new Blob([JSON.stringify({name})], {type:'application/json'}));
+    if(fileId) {
+      // Mise à jour fichier existant
+      form.append('metadata', new Blob([JSON.stringify({name:this.BACKUP_FILE})], {type:'application/json'}));
       form.append('file', blob);
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${found.files[0].id}?uploadType=multipart`, {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`, {
         method:'PATCH', headers:{ Authorization:'Bearer '+this._token }, body:form });
     } else {
-      // Création
-      form.append('metadata', new Blob([JSON.stringify({name, parents:[folderId]})], {type:'application/json'}));
+      // Création nouveau fichier
+      form.append('metadata', new Blob([JSON.stringify({name:this.BACKUP_FILE, parents:[folderId]})], {type:'application/json'}));
       form.append('file', blob);
-      await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method:'POST', headers:{ Authorization:'Bearer '+this._token }, body:form });
+      const created = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+        method:'POST', headers:{ Authorization:'Bearer '+this._token }, body:form }).then(r=>r.json());
+      this._fileId = created.id;
     }
   },
 
-  /* ---------- SYNC ---------- */
+  /* ---------- FUSION ---------- */
+  _merge(localItems, driveItems) {
+    // Index par ID
+    const map = new Map();
+    // On ajoute d'abord les items Drive
+    (driveItems || []).forEach(item => map.set(item.id, item));
+    // Puis les items locaux — si même ID, on garde le plus récent (via updatedAt ou on fusionne)
+    (localItems || []).forEach(item => {
+      if(!map.has(item.id)) {
+        // Nouvel item local absent du Drive → on l'ajoute
+        map.set(item.id, item);
+      } else {
+        // Même ID des deux côtés → on garde le plus récent
+        const driveItem  = map.get(item.id);
+        const localDate  = new Date(item.updatedAt  || item.date || 0);
+        const driveDate  = new Date(driveItem.updatedAt || driveItem.date || 0);
+        map.set(item.id, localDate >= driveDate ? item : driveItem);
+      }
+    });
+    return Array.from(map.values());
+  },
+
+  /* ---------- SYNC BIDIRECTIONNELLE ---------- */
   async sync() {
     if(!this._token) { this.signIn(); return; }
     const btn   = document.getElementById('drive-sync-btn');
@@ -1376,18 +1413,63 @@ const GDrive = {
     label.textContent = 'Synchronisation…';
     try {
       const folderId = await this._getOrCreateFolder();
-      const payload  = JSON.stringify({
-        notes:   State.notes,
-        fiches:  State.fiches,
-        syncedAt: new Date().toISOString(),
-        version:  2
-      }, null, 2);
-      await this._upsertFile(this.BACKUP_FILE, payload, folderId);
+      const fileId   = await this._findBackupFile(folderId);
+
+      let driveNotes  = [];
+      let driveFiches = [];
+
+      // 1. Télécharger depuis Drive si fichier existant
+      if(fileId) {
+        const backup = await this._downloadBackup(fileId);
+        if(backup) {
+          driveNotes  = backup.notes  || [];
+          driveFiches = backup.fiches || [];
+        }
+      }
+
+      // 2. Fusionner local + Drive
+      const mergedNotes  = this._merge(State.notes,  driveNotes);
+      const mergedFiches = this._merge(State.fiches, driveFiches);
+
+      // Compter les nouveaux éléments récupérés depuis Drive
+      const newNotesFromDrive  = mergedNotes.filter(n  => !State.notes.find(x  => x.id===n.id)).length;
+      const newFichesFromDrive = mergedFiches.filter(f => !State.fiches.find(x => x.id===f.id)).length;
+
+      // 3. Mettre à jour l'état local
+      State.notes  = mergedNotes;
+      State.fiches = mergedFiches;
+      State.saveNotes();
+      State.saveFiches();
+
+      // Rafraîchir l'affichage si on est sur la liste
+      if(State.module === 'notes')  Notes.render();
+      if(State.module === 'fiches') Fiches.render();
+
+      // 4. Uploader la version fusionnée sur Drive
       const now = new Date().toISOString();
+      await this._uploadBackup({
+        notes:    mergedNotes,
+        fiches:   mergedFiches,
+        syncedAt: now,
+        version:  2
+      }, folderId, fileId || this._fileId);
+
+      // 5. Mettre à jour UI
       localStorage.setItem(this.LAST_SYNC_KEY, now);
-      document.getElementById('sync-last-date').textContent = this._fmtDate(now);
+      document.getElementById('sync-notes-count').textContent  = mergedNotes.length;
+      document.getElementById('sync-fiches-count').textContent = mergedFiches.length;
+      document.getElementById('sync-last-date').textContent    = this._fmtDate(now);
+
+      // Message résumé
+      let msg = 'Synchronisé avec Drive';
+      const parts = [];
+      if(newNotesFromDrive  > 0) parts.push(`+${newNotesFromDrive} note${newNotesFromDrive>1?'s':''}`);
+      if(newFichesFromDrive > 0) parts.push(`+${newFichesFromDrive} fiche${newFichesFromDrive>1?'s':''}`);
+      if(parts.length > 0) msg += ' (' + parts.join(', ') + ' récupérées)';
+
       this.closeModal();
-      UI.toast('Synchronisé avec Google Drive', '☁️');
+      UI.toast(msg, '☁️', 3500);
+
     } catch(e) {
       alert('Erreur de synchronisation : ' + (e.message||e));
     } finally {
